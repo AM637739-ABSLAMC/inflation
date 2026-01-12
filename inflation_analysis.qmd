@@ -30,7 +30,7 @@ warnings.filterwarnings('ignore')
 df = pd.read_csv('cleaned_inflation_with_calculations.csv')
 
 # Convert time column to datetime
-df['time'] = pd.to_datetime(df['time'])
+df['time'] = pd.to_datetime(df['time'], dayfirst=True)
 
 # Extract year and month for analysis
 df['Year'] = df['time'].dt.year
@@ -188,6 +188,229 @@ cbar.set_label('MoM Change (%)', fontweight='bold', fontsize=11)
 
 plt.tight_layout()
 plt.show()
+```
+
+# Category-wise Inflation Breakdown
+
+This section shows how different CPI categories contribute to overall inflation, providing insights into which sectors are driving price changes.
+
+```{python}
+#| echo: false
+#| warning: false
+
+# Define major CPI categories and their column names
+category_mapping = {
+    'Food & Beverages': 'Consumer Price Index: Food and Beverages',
+    'Pan, Tobacco & Intox': 'Consumer Price Index: Pan, Tobacco and Intoxicants',
+    'Clothing & Footwear': 'Consumer Price Index: Clothing and Footwear',
+    'Housing': 'Consumer Price Index: Housing',
+    'Fuel & Light': 'Consumer Price Index: Fuel and Light',
+    'Miscellaneous': 'Consumer Price Index: Miscellaneous'
+}
+
+# Calculate YoY% for each category
+for short_name, col_name in category_mapping.items():
+    if col_name in df.columns:
+        df[f'{short_name}_YoY'] = df[col_name].pct_change(12) * 100
+
+# Filter to last 3 years for clearer visualization
+current_year_cat = df['Year'].max()
+df_categories = df[df['Year'] >= current_year_cat - 2].copy()
+```
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 14
+#| fig-height: 8
+#| label: fig-category-breakdown
+#| fig-cap: "CPI Category Breakdown: Overall Inflation Line with Category Components"
+
+# Create figure with dual y-axes
+fig, ax1 = plt.subplots(figsize=(14, 8))
+
+# Prepare data for stacked bars - using index values (normalized to 100 in base period)
+# We'll show the relative levels of each category
+bar_width = 20  # days width for bars
+x_positions = df_categories['time']
+
+# Define colors for categories
+category_colors = {
+    'Food & Beverages': '#e74c3c',
+    'Miscellaneous': '#3498db',
+    'Housing': '#2ecc71',
+    'Fuel & Light': '#f39c12',
+    'Clothing & Footwear': '#9b59b6',
+    'Pan, Tobacco & Intox': '#95a5a6'
+}
+
+# Create stacked bars with YoY values
+bottom = np.zeros(len(df_categories))
+bar_handles = []
+
+for short_name in category_mapping.keys():
+    yoy_col = f'{short_name}_YoY'
+    if yoy_col in df_categories.columns:
+        values = df_categories[yoy_col].fillna(0).values
+        bars = ax1.bar(x_positions, values, width=bar_width, bottom=bottom, 
+                       label=short_name, color=category_colors[short_name], 
+                       alpha=0.7, edgecolor='white', linewidth=0.5)
+        bar_handles.append(bars)
+        bottom += values
+
+# Create secondary y-axis for the line chart
+ax2 = ax1.twinx()
+
+# Plot overall CPI YoY as a line on secondary axis
+line = ax2.plot(df_categories['time'], df_categories['CPI_YoY'], 
+                color='black', linewidth=2.5, marker='o', markersize=4,
+                label='Overall CPI YoY%', zorder=10)
+
+# Add RBI target band shading on secondary axis
+ax2.axhspan(4, 6, alpha=0.15, color='green', zorder=0, label='RBI Target (4-6%)')
+ax2.axhline(y=4, color='green', linestyle='--', linewidth=1, alpha=0.5)
+ax2.axhline(y=6, color='green', linestyle='--', linewidth=1, alpha=0.5)
+
+# Formatting
+ax1.set_xlabel('Time Period', fontweight='bold', fontsize=13)
+ax1.set_ylabel('Category-wise YoY Inflation (%)', fontweight='bold', fontsize=13)
+ax2.set_ylabel('Overall CPI YoY Inflation (%)', fontweight='bold', fontsize=13, color='black')
+
+ax1.set_title('CPI Inflation: Overall Trend and Category Breakdown (Last 3 Years)', 
+              fontweight='bold', fontsize=15, pad=20)
+
+# Grid
+ax1.grid(True, alpha=0.3, linestyle='--', linewidth=0.7, axis='y')
+ax2.grid(False)
+
+# Format x-axis
+import matplotlib.dates as mdates
+ax1.xaxis.set_major_locator(mdates.MonthLocator(bymonth=(1, 4, 7, 10)))
+ax1.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+ax1.xaxis.set_minor_locator(mdates.MonthLocator())
+plt.setp(ax1.xaxis.get_majorticklabels(), rotation=45, ha='right', fontweight='bold')
+
+# Y-axis formatting
+ax1.tick_params(axis='y', labelcolor='black', labelsize=10, width=1.5)
+ax2.tick_params(axis='y', labelcolor='black', labelsize=10, width=1.5)
+
+# Combine legends
+bars_legend = [plt.Rectangle((0,0),1,1, fc=category_colors[name], alpha=0.7, edgecolor='white') 
+               for name in category_mapping.keys()]
+line_legend = [plt.Line2D([0], [0], color='black', linewidth=2.5, marker='o', markersize=6)]
+target_legend = [plt.Rectangle((0,0),1,1, fc='green', alpha=0.15)]
+
+all_handles = bars_legend + line_legend + target_legend
+all_labels = list(category_mapping.keys()) + ['Overall CPI YoY%', 'RBI Target (4-6%)']
+
+ax1.legend(all_handles, all_labels, loc='upper left', fontsize=10, 
+           frameon=True, shadow=True, ncol=2)
+
+plt.tight_layout()
+plt.show()
+```
+
+## Category Contributions Analysis
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 14
+#| fig-height: 8
+#| label: fig-category-stacked
+#| fig-cap: "Category-wise Inflation Rates - Stacked View"
+
+# Create stacked area chart showing individual category inflation rates
+fig, ax = plt.subplots(figsize=(14, 8))
+
+# Prepare data - only positive values for stacking
+category_data = {}
+for short_name in category_mapping.keys():
+    yoy_col = f'{short_name}_YoY'
+    if yoy_col in df_categories.columns:
+        # Take absolute values to show magnitude
+        category_data[short_name] = df_categories[yoy_col].fillna(0).abs().values
+
+# Create stacked area
+ax.stackplot(df_categories['time'],
+             *[category_data[name] for name in category_mapping.keys()],
+             labels=list(category_mapping.keys()),
+             colors=[category_colors[name] for name in category_mapping.keys()],
+             alpha=0.8, edgecolor='white', linewidth=0.5)
+
+# Formatting
+ax.set_xlabel('Time Period', fontweight='bold', fontsize=13)
+ax.set_ylabel('Absolute YoY Inflation Rate (%)', fontweight='bold', fontsize=13)
+ax.set_title('Category-wise Inflation Magnitude (Stacked Area)', 
+             fontweight='bold', fontsize=15, pad=20)
+
+# Grid
+ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.7, axis='y')
+
+# Format x-axis
+ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=(1, 4, 7, 10)))
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+ax.xaxis.set_minor_locator(mdates.MonthLocator())
+plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right', fontweight='bold')
+
+# Legend
+ax.legend(loc='upper left', fontsize=10, frameon=True, shadow=True, ncol=2)
+
+plt.tight_layout()
+plt.show()
+```
+
+## Recent Category Trends
+
+```{python}
+#| echo: false
+#| output: asis
+
+# Get latest month data
+latest_cat_data = df_categories.iloc[-1]
+prev_cat_data = df_categories.iloc[-2] if len(df_categories) > 1 else latest_cat_data
+
+latest_cat_date = latest_cat_data['time'].strftime('%B %Y')
+
+print(f"### Current Month: {latest_cat_date}")
+print("\n| Category | Current YoY (%) | Previous Month (%) | Change |")
+print("|----------|----------------|-------------------|--------|")
+
+for short_name in category_mapping.keys():
+    yoy_col = f'{short_name}_YoY'
+    if yoy_col in df_categories.columns:
+        current_val = latest_cat_data[yoy_col]
+        prev_val = prev_cat_data[yoy_col]
+        
+        if pd.notna(current_val) and pd.notna(prev_val):
+            change = current_val - prev_val
+            arrow = "↑" if change > 0 else "↓" if change < 0 else "→"
+            print(f"| {short_name} | {current_val:.2f}% | {prev_val:.2f}% | {arrow} {abs(change):.2f}pp |")
+        elif pd.notna(current_val):
+            print(f"| {short_name} | {current_val:.2f}% | N/A | - |")
+
+# Identify highest and lowest categories
+print("\n### Key Insights")
+
+category_values = {}
+for short_name in category_mapping.keys():
+    yoy_col = f'{short_name}_YoY'
+    if yoy_col in df_categories.columns:
+        val = latest_cat_data[yoy_col]
+        if pd.notna(val):
+            category_values[short_name] = val
+
+if category_values:
+    highest_cat = max(category_values, key=category_values.get)
+    lowest_cat = min(category_values, key=category_values.get)
+    
+    print(f"\n- **Highest inflation**: {highest_cat} at {category_values[highest_cat]:.2f}% YoY")
+    print(f"- **Lowest inflation**: {lowest_cat} at {category_values[lowest_cat]:.2f}% YoY")
+    
+    # Check if any category is in deflation
+    deflation_cats = [cat for cat, val in category_values.items() if val < 0]
+    if deflation_cats:
+        print(f"\n- **Categories in deflation**: {', '.join(deflation_cats)}")
 ```
 
 # Top 5 Changes

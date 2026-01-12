@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2026-01-12">
+
+<title>India CPI Inflation Chartbook</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="inflation_chartbook_files/libs/clipboard/clipboard.min.js"></script>
+<script src="inflation_chartbook_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="inflation_chartbook_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="inflation_chartbook_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="inflation_chartbook_files/libs/quarto-html/popper.min.js"></script>
+<script src="inflation_chartbook_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="inflation_chartbook_files/libs/quarto-html/anchor.min.js"></script>
+<link href="inflation_chartbook_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="inflation_chartbook_files/libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="inflation_chartbook_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="inflation_chartbook_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="inflation_chartbook_files/libs/bootstrap/bootstrap-9e3ffae467580fdb927a41352e75a2e0.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul class="collapse">
+  <li><a href="#headline-vs-core-trend" id="toc-headline-vs-core-trend" class="nav-link active" data-scroll-target="#headline-vs-core-trend">1. Headline vs Core Trend</a></li>
+  <li><a href="#momentum-turning-points" id="toc-momentum-turning-points" class="nav-link" data-scroll-target="#momentum-turning-points">2. Momentum &amp; Turning Points</a></li>
+  <li><a href="#inflation-drivers" id="toc-inflation-drivers" class="nav-link" data-scroll-target="#inflation-drivers">3. Inflation Drivers</a></li>
+  <li><a href="#inflation-breadth-diffusion" id="toc-inflation-breadth-diffusion" class="nav-link" data-scroll-target="#inflation-breadth-diffusion">4. Inflation Breadth &amp; Diffusion</a></li>
+  <li><a href="#distribution-snapshot" id="toc-distribution-snapshot" class="nav-link" data-scroll-target="#distribution-snapshot">5. Distribution Snapshot</a></li>
+  <li><a href="#underlying-inflation" id="toc-underlying-inflation" class="nav-link" data-scroll-target="#underlying-inflation">6. Underlying Inflation</a></li>
+  <li><a href="#seasonality-patterns" id="toc-seasonality-patterns" class="nav-link" data-scroll-target="#seasonality-patterns">7. Seasonality Patterns</a></li>
+  <li><a href="#shock-trackers" id="toc-shock-trackers" class="nav-link" data-scroll-target="#shock-trackers">8. Shock Trackers</a></li>
+  <li><a href="#top-movers" id="toc-top-movers" class="nav-link" data-scroll-target="#top-movers">9. Top Movers</a></li>
+  <li><a href="#appendix-methodology-data-diagnostics" id="toc-appendix-methodology-data-diagnostics" class="nav-link" data-scroll-target="#appendix-methodology-data-diagnostics">Appendix: Methodology &amp; Data Diagnostics</a>
+  <ul class="collapse">
+  <li><a href="#key-definitions" id="toc-key-definitions" class="nav-link" data-scroll-target="#key-definitions">Key Definitions</a></li>
+  <li><a href="#data-processing-notes" id="toc-data-processing-notes" class="nav-link" data-scroll-target="#data-processing-notes">Data Processing Notes</a></li>
+  <li><a href="#limitations-caveats" id="toc-limitations-caveats" class="nav-link" data-scroll-target="#limitations-caveats">Limitations &amp; Caveats</a></li>
+  <li><a href="#suggested-use-cases" id="toc-suggested-use-cases" class="nav-link" data-scroll-target="#suggested-use-cases">Suggested Use Cases</a></li>
+  </ul></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="inflation_chartbook.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li><li><a href="inflation_chartbook.docx"><i class="bi bi-file-word"></i>MS Word</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">India CPI Inflation Chartbook</h1>
+<p class="subtitle lead">Fixed Income Macro Analysis</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">January 12, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div id="setup-and-preprocessing" class="cell" data-execution_count="1">
+<div class="cell-output cell-output-stdout">
+<pre><code>✓ Preprocessing complete
+✓ Weight coverage: 99.7%
+✓ Leaf components: 298
+✓ Data range: 2011-01 to 2025-10</code></pre>
+</div>
+</div>
+<section id="headline-vs-core-trend" class="level1">
+<h1>1. Headline vs Core Trend</h1>
+<p>Policy anchor: tracking headline and core inflation against RBI target band.</p>
+<div id="cell-fig-headline-core-trend" class="cell" data-fig-height="6" data-fig-width="12" data-execution_count="3">
+<div class="cell-output cell-output-display">
+<div id="fig-headline-core-trend" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-headline-core-trend-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="inflation_chartbook_files/figure-html/fig-headline-core-trend-output-1.png" width="1142" height="567" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-headline-core-trend-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Headline and Core Inflation (YoY) - 7 Year Trend
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><em>Note: Chart shows available measures. Core = {CORE_COL if CORE_COL else ‘N/A’}.</em></p>
+</section>
+<section id="momentum-turning-points" class="level1">
+<h1>2. Momentum &amp; Turning Points</h1>
+<p>Short-term momentum signals for rate traders: 3-month and 6-month SAAR.</p>
+<div id="cell-fig-momentum-saar" class="cell" data-fig-height="10" data-fig-width="12" data-execution_count="4">
+<div class="cell-output cell-output-display">
+<div id="fig-momentum-saar" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-momentum-saar-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="inflation_chartbook_files/figure-html/fig-momentum-saar-output-1.png" width="1142" height="952" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-momentum-saar-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Inflation Momentum: YoY and SAAR Measures
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><em>SAAR formula: ((I_t / I_{t-w})^(12/w) - 1) × 100. Captures recent momentum better than YoY during turning points.</em></p>
+</section>
+<section id="inflation-drivers" class="level1">
+<h1>3. Inflation Drivers</h1>
+<p>TRUE contributions in percentage points (not stacked YoY rates). Shows which sectors drive headline inflation.</p>
+<div id="cell-fig-drivers-stacked" class="cell" data-fig-height="7" data-fig-width="14" data-execution_count="6">
+<div class="cell-output cell-output-display">
+<div id="fig-drivers-stacked" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-drivers-stacked-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="inflation_chartbook_files/figure-html/fig-drivers-stacked-output-1.png" width="1335" height="663" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-drivers-stacked-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Inflation Drivers: Sectoral Contributions (pp) to Headline YoY
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div id="cell-fig-waterfall-latest" class="cell" data-fig-height="6" data-fig-width="10" data-execution_count="7">
+<div class="cell-output cell-output-display">
+<div id="fig-waterfall-latest" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-waterfall-latest-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="inflation_chartbook_files/figure-html/fig-waterfall-latest-output-1.png" width="952" height="569" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-waterfall-latest-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Latest Month: Change in Headline YoY Decomposition
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><em>Contributions computed as (group_weight / 100) × group_YoY. Shows true pp impact on headline.</em></p>
+</section>
+<section id="inflation-breadth-diffusion" class="level1">
+<h1>4. Inflation Breadth &amp; Diffusion</h1>
+<p>Weighted diffusion using leaf components: measures broad-based vs concentrated inflation.</p>
+<div id="cell-fig-diffusion-stacked" class="cell" data-fig-height="7" data-fig-width="14" data-execution_count="9">
+<div class="cell-output cell-output-display">
+<div id="fig-diffusion-stacked" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-diffusion-stacked-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="inflation_chartbook_files/figure-html/fig-diffusion-stacked-output-1.png" width="1334" height="663" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-diffusion-stacked-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Inflation Breadth: Distribution of CPI Components
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div id="cell-fig-diffusion-risk-gauge" class="cell" data-fig-height="5" data-fig-width="12" data-execution_count="10">
+<div class="cell-output cell-output-display">
+<div id="fig-diffusion-risk-gauge" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-diffusion-risk-gauge-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="inflation_chartbook_files/figure-html/fig-diffusion-risk-gauge-output-1.png" width="1142" height="471" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-diffusion-risk-gauge-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: Risk Gauge: Share of Basket Above 6% YoY
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><em>Diffusion method: {‘Weighted by CPI weights’ if USE_WEIGHTED else ‘Unweighted (fallback due to &lt;70% weight coverage)’}. Weight coverage: {weight_coverage:.1f}%.</em></p>
+</section>
+<section id="distribution-snapshot" class="level1">
+<h1>5. Distribution Snapshot</h1>
+<p>Cross-sectional distribution of inflation across components (latest month).</p>
+<div id="cell-fig-distribution-snapshot" class="cell" data-fig-height="6" data-fig-width="12" data-execution_count="11">
+<div class="cell-output cell-output-display">
+<div id="fig-distribution-snapshot" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-distribution-snapshot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="inflation_chartbook_files/figure-html/fig-distribution-snapshot-output-1.png" width="1143" height="567" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-distribution-snapshot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: Current Inflation Distribution Across CPI Components
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="underlying-inflation" class="level1">
+<h1>6. Underlying Inflation</h1>
+<p>Weighted median and trimmed mean: robust measures less affected by outliers.</p>
+<div id="cell-fig-underlying" class="cell" data-fig-height="6" data-fig-width="12" data-execution_count="13">
+<div class="cell-output cell-output-display">
+<div id="fig-underlying" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-underlying-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="inflation_chartbook_files/figure-html/fig-underlying-output-1.png" width="1142" height="567" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-underlying-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: Underlying Inflation Measures
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><em>Trimmed mean excludes top/bottom 15% by weight. More stable than headline during supply shocks.</em></p>
+</section>
+<section id="seasonality-patterns" class="level1">
+<h1>7. Seasonality Patterns</h1>
+<p>MoM inflation heatmaps reveal seasonal patterns in key categories.</p>
+<div id="cell-fig-seasonality-heatmaps" class="cell" data-fig-height="10" data-fig-width="16" data-execution_count="14">
+<div class="cell-output cell-output-display">
+<div id="fig-seasonality-heatmaps" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-seasonality-heatmaps-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="inflation_chartbook_files/figure-html/fig-seasonality-heatmaps-output-1.png" width="1496" height="952" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-seasonality-heatmaps-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9: Seasonality Heatmap: MoM Inflation Patterns
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><em>Color intensity shows MoM % change. Patterns reveal recurring seasonal effects (e.g., harvest cycles, festival demand).</em></p>
+</section>
+<section id="shock-trackers" class="level1">
+<h1>8. Shock Trackers</h1>
+<p>Volatile components and stress indicators for fixed-income positioning.</p>
+<div id="cell-fig-shock-trackers" class="cell" data-fig-height="10" data-fig-width="14" data-execution_count="15">
+<div class="cell-output cell-output-display">
+<div id="fig-shock-trackers" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-shock-trackers-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="inflation_chartbook_files/figure-html/fig-shock-trackers-output-1.png" width="1335" height="953" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-shock-trackers-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10: Volatility &amp; Shock Indicators
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><em>Shock trackers highlight volatile components driving near-term inflation surprises.</em></p>
+</section>
+<section id="top-movers" class="level1">
+<h1>9. Top Movers</h1>
+<p>Components with largest contribution to recent inflation changes (leaf-level only).</p>
+<div id="cell-fig-top-movers" class="cell" data-fig-height="10" data-fig-width="14" data-execution_count="17">
+<div class="cell-output cell-output-display">
+<div id="fig-top-movers" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-top-movers-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="inflation_chartbook_files/figure-html/fig-top-movers-output-1.png" width="1337" height="952" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-top-movers-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11: Top Contributors to Recent Inflation
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><em>Contribution-aware analysis: identifies which components materially moved headline inflation.</em></p>
+</section>
+<section id="appendix-methodology-data-diagnostics" class="level1">
+<h1>Appendix: Methodology &amp; Data Diagnostics</h1>
+<section id="key-definitions" class="level2">
+<h2 class="anchored" data-anchor-id="key-definitions">Key Definitions</h2>
+<p><strong>YoY (Year-over-Year):</strong> 12-month percentage change in index level: <span class="math inline">\(\text{YoY}_t = \frac{I_t - I_{t-12}}{I_{t-12}} \times 100\)</span></p>
+<p><strong>MoM (Month-over-Month):</strong> 1-month percentage change: <span class="math inline">\(\text{MoM}_t = \frac{I_t - I_{t-1}}{I_{t-1}} \times 100\)</span></p>
+<p><strong>SAAR (Seasonally Adjusted Annual Rate):</strong> Annualized growth rate over <span class="math inline">\(w\)</span> months: <span class="math inline">\(\text{SAAR}_t = \left[\left(\frac{I_t}{I_{t-w}}\right)^{12/w} - 1\right] \times 100\)</span></p>
+<p><strong>TRUE Contribution (pp):</strong> Exact percentage point impact: <span class="math inline">\(\text{Contrib}_i = \frac{w_i}{100} \times \text{YoY}_i\)</span> where <span class="math inline">\(w_i\)</span> is CPI weight.</p>
+<p><strong>Weighted Median:</strong> Middle value after sorting components by YoY with cumulative weight reaching 50%.</p>
+<p><strong>Trimmed Mean:</strong> Weighted average excluding top/bottom 15% of components by weight.</p>
+<p><strong>Diffusion:</strong> Share of CPI weight (or count) with YoY in specified range (e.g., &gt;6%, 4-6%, &lt;4%).</p>
+</section>
+<section id="data-processing-notes" class="level2">
+<h2 class="anchored" data-anchor-id="data-processing-notes">Data Processing Notes</h2>
+<div id="appendix-diagnostics" class="cell" data-execution_count="18">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"="</span> <span class="op">*</span> <span class="dv">70</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"DATA DIAGNOSTICS SUMMARY"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"="</span> <span class="op">*</span> <span class="dv">70</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">1. RESOLVED COLUMN NAMES:"</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   Headline: </span><span class="sc">{</span>HEADLINE_COL<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   Core: </span><span class="sc">{</span>CORE_COL <span class="cf">if</span> CORE_COL <span class="cf">else</span> <span class="st">'NOT FOUND'</span><span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   Ex-Vegetables: </span><span class="sc">{</span>EXVEG_COL <span class="cf">if</span> EXVEG_COL <span class="cf">else</span> <span class="st">'NOT FOUND'</span><span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   Ex-Gold: </span><span class="sc">{</span>EXGOLD_COL <span class="cf">if</span> EXGOLD_COL <span class="cf">else</span> <span class="st">'NOT FOUND'</span><span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   Food &amp; Beverages: </span><span class="sc">{</span><span class="bu">list</span>(MAJOR_GROUPS.keys())[<span class="dv">0</span>] <span class="cf">if</span> <span class="bu">len</span>(MAJOR_GROUPS) <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> <span class="st">'NOT FOUND'</span><span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">2. WEIGHT COVERAGE:"</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   Total leaf components: </span><span class="sc">{</span><span class="bu">len</span>(leaf_cols)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   Total weight covered: </span><span class="sc">{</span>weight_coverage<span class="sc">:.2f}</span><span class="ss">%"</span>)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   Weighted analysis enabled: </span><span class="sc">{</span>USE_WEIGHTED<span class="sc">}</span><span class="ss"> (threshold: 70%)"</span>)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">3. TIME COVERAGE:"</span>)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   Full dataset: </span><span class="sc">{</span>df[<span class="st">'time'</span>]<span class="sc">.</span><span class="bu">min</span>()<span class="sc">.</span>strftime(<span class="st">'%Y-%m-</span><span class="sc">%d</span><span class="st">'</span>)<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>df[<span class="st">'time'</span>]<span class="sc">.</span><span class="bu">max</span>()<span class="sc">.</span>strftime(<span class="st">'%Y-%m-</span><span class="sc">%d</span><span class="st">'</span>)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   7-year window: </span><span class="sc">{</span>df_7y[<span class="st">'time'</span>]<span class="sc">.</span><span class="bu">min</span>()<span class="sc">.</span>strftime(<span class="st">'%Y-%m-</span><span class="sc">%d</span><span class="st">'</span>)<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>df_7y[<span class="st">'time'</span>]<span class="sc">.</span><span class="bu">max</span>()<span class="sc">.</span>strftime(<span class="st">'%Y-%m-</span><span class="sc">%d</span><span class="st">'</span>)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   Total months (full): </span><span class="sc">{</span><span class="bu">len</span>(df)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   Total months (7y): </span><span class="sc">{</span><span class="bu">len</span>(df_7y)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">4. INTERPOLATION POLICY:"</span>)</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   Method: Linear interpolation for gaps ≤3 months"</span>)</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   Imputed months: </span><span class="sc">{</span><span class="bu">len</span>(DIAGNOSTICS.get(<span class="st">'imputed_months'</span>, [])) <span class="cf">if</span> <span class="st">'imputed_months'</span> <span class="kw">in</span> DIAGNOSTICS <span class="cf">else</span> <span class="st">'Not tracked'</span><span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">5. MAJOR GROUPS (weights):"</span>)</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> group, info <span class="kw">in</span> MAJOR_GROUPS.items():</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"   </span><span class="sc">{</span>group<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>info[<span class="st">'weight'</span>]<span class="sc">:.2f}</span><span class="ss">%"</span>)</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">6. AGGREGATE SERIES EXCLUDED:"</span>)</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   Count: </span><span class="sc">{</span><span class="bu">len</span>(AGGREGATE_SERIES)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   Examples: </span><span class="sc">{</span><span class="bu">list</span>(AGGREGATE_SERIES)[:<span class="dv">5</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">7. MISSING DATA HANDLING:"</span>)</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>missing_components <span class="op">=</span> []</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> col <span class="kw">in</span> leaf_cols:</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>    yoy_col <span class="op">=</span> <span class="ss">f'</span><span class="sc">{</span>col<span class="sc">}</span><span class="ss">_YoY'</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> yoy_col <span class="kw">in</span> df.columns:</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>        missing_pct <span class="op">=</span> df[yoy_col].isna().<span class="bu">sum</span>() <span class="op">/</span> <span class="bu">len</span>(df) <span class="op">*</span> <span class="dv">100</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> missing_pct <span class="op">&gt;</span> <span class="dv">10</span>:</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>            missing_components.append((col, missing_pct))</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> missing_components:</span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"   Components with &gt;10% missing YoY data:"</span>)</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> comp, pct <span class="kw">in</span> <span class="bu">sorted</span>(missing_components, key<span class="op">=</span><span class="kw">lambda</span> x: x[<span class="dv">1</span>], reverse<span class="op">=</span><span class="va">True</span>)[:<span class="dv">10</span>]:</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"      </span><span class="sc">{</span>comp<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>pct<span class="sc">:.1f}</span><span class="ss">% missing"</span>)</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"   No components with &gt;10% missing data"</span>)</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span> <span class="op">+</span> <span class="st">"="</span> <span class="op">*</span> <span class="dv">70</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>======================================================================
+DATA DIAGNOSTICS SUMMARY
+======================================================================
+
+1. RESOLVED COLUMN NAMES:
+   Headline: Consumer Price Index
+   Core: Core Index
+   Ex-Vegetables: CPI (ExVeggies)
+   Ex-Gold: NOT FOUND
+   Food &amp; Beverages: Food &amp; Beverages
+
+2. WEIGHT COVERAGE:
+   Total leaf components: 298
+   Total weight covered: 99.67%
+   Weighted analysis enabled: True (threshold: 70%)
+
+3. TIME COVERAGE:
+   Full dataset: 2011-01-01 to 2025-10-01
+   7-year window: 2019-01-01 to 2025-10-01
+   Total months (full): 178
+   Total months (7y): 82
+
+4. INTERPOLATION POLICY:
+   Method: Linear interpolation for gaps ≤3 months
+   Imputed months: Not tracked
+
+5. MAJOR GROUPS (weights):
+   Food &amp; Beverages: 45.86%
+   Pan, Tobacco &amp; Intox: 2.38%
+   Clothing &amp; Footwear: 6.53%
+   Housing: 10.07%
+   Fuel &amp; Light: 6.84%
+   Miscellaneous: 28.32%
+
+6. AGGREGATE SERIES EXCLUDED:
+   Count: 21
+   Examples: ['Consumer Price Index: Housing', 'Custom Index 2', 'Consumer Price Index: Clothing and Footwear', 'Consumer Price Index: Miscellaneous', 'Core Bottom Up']
+
+7. MISSING DATA HANDLING:
+   Components with &gt;10% missing YoY data:
+      Consumer Price Index: Food and Beverages: Leechi: 29.2% missing
+      Consumer Price Index: Food and Beverages: Rice by Public Distribution System: 27.0% missing
+      Consumer Price Index: Food and Beverages: Rice by Other Sources: 27.0% missing
+      Consumer Price Index: Food and Beverages: Chira: 27.0% missing
+      Consumer Price Index: Food and Beverages: Muri: 27.0% missing
+      Consumer Price Index: Food and Beverages: Other Rice Products: 27.0% missing
+      Consumer Price Index: Food and Beverages: Wheat or Atta by Public Distribution System: 27.0% missing
+      Consumer Price Index: Food and Beverages: Wheat or Atta by Other Sources: 27.0% missing
+      Consumer Price Index: Food and Beverages: Maida: 27.0% missing
+      Consumer Price Index: Food and Beverages: Suji, Rawa: 27.0% missing
+
+======================================================================</code></pre>
+</div>
+</div>
+</section>
+<section id="limitations-caveats" class="level2">
+<h2 class="anchored" data-anchor-id="limitations-caveats">Limitations &amp; Caveats</h2>
+<ol type="1">
+<li><strong>Index Construction:</strong> CPI indices provided as-is; no rebasing or chaining performed.</li>
+<li><strong>Weight Accuracy:</strong> Weights from detailed_weights.json; may not sum exactly to 100 due to rounding.</li>
+<li><strong>Seasonal Adjustment:</strong> Raw data used; no seasonal adjustment applied.</li>
+<li><strong>Component Classification:</strong> Leaf vs aggregate status inferred from AGGREGATE_SERIES set.</li>
+<li><strong>Missing Data:</strong> Linear interpolation used for gaps ≤3 months; longer gaps left as NaN.</li>
+<li><strong>Weighted Analysis:</strong> Falls back to unweighted if weight coverage &lt;70%.</li>
+</ol>
+</section>
+<section id="suggested-use-cases" class="level2">
+<h2 class="anchored" data-anchor-id="suggested-use-cases">Suggested Use Cases</h2>
+<ul>
+<li><strong>Rates Traders:</strong> Focus on Sections 1-3 (trend, momentum, drivers) and Section 8 (shocks).</li>
+<li><strong>Policy Analysis:</strong> Sections 4-6 (breadth, distribution, underlying) for broad-based vs concentrated inflation.</li>
+<li><strong>Nowcasting:</strong> Section 9 (top movers) for latest month attribution.</li>
+<li><strong>Seasonality Research:</strong> Section 7 heatmaps for harvest/festival effects.</li>
+</ul>
+<hr>
+<p><strong>Chartbook Generated:</strong> {pd.Timestamp.now().strftime(‘%Y-%m-%d %H:%M:%S’)}<br>
+<strong>Data Through:</strong> {df[‘time’].max().strftime(‘%B %Y’)}</p>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
