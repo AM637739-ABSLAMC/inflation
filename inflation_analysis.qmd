@@ -1,0 +1,1690 @@
+---
+title: "Inflation Analysis Report"
+date: "today"
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+    fig-pos: 'H'
+    keep-tex: false
+  docx:
+    toc: true
+    number-sections: true
+    highlight-style: github
+---
+
+
+
+```{python}
+#| echo: false
+#| message: false
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import warnings
+warnings.filterwarnings('ignore')
+
+# Load the dataset
+df = pd.read_csv('cleaned_inflation_with_calculations.csv')
+
+# Convert time column to datetime
+df['time'] = pd.to_datetime(df['time'])
+
+# Extract year and month for analysis
+df['Year'] = df['time'].dt.year
+df['Month'] = df['time'].dt.month
+df['Month_Name'] = df['time'].dt.strftime('%b')
+
+# Calculate year-on-year percentage change for CPI
+df['CPI_YoY'] = df['Consumer Price Index'].pct_change(12) * 100
+
+# Calculate month-on-month percentage change for CPI
+df['CPI_MoM'] = df['Consumer Price Index'].pct_change(1) * 100
+
+# Sort the dataframe by time
+df = df.sort_values('time').reset_index(drop=True)
+```
+
+# Overall Consumer Price Index Heatmap
+
+## Year-on-Year Change
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 10
+#| fig-height: 6
+#| label: fig-yoy-heatmap
+#| fig-cap: "Consumer Price Index - Year-on-Year Change Heatmap"
+
+# Calculate YoY and MoM on the full dataframe first
+df['CPI_YoY'] = df['Consumer Price Index'].pct_change(12) * 100
+df['CPI_MoM'] = df['Consumer Price Index'].pct_change(1) * 100
+
+# Filter data for the last 7 years
+current_year = df['Year'].max()
+df_last_7_years = df[df['Year'] >= current_year - 6].copy()
+
+# Create pivot table for YoY heatmap
+month_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+yoy_pivot = df_last_7_years.pivot_table(
+    values='CPI_YoY', 
+    index='Month', 
+    columns='Year',
+    aggfunc='first'
+)
+
+# Reindex to ensure all 12 months
+yoy_pivot = yoy_pivot.reindex(index=range(1, 13))
+
+# Create the heatmap using imshow
+fig, ax = plt.subplots(figsize=(10, 6))
+vals = yoy_pivot.values
+
+# Dynamic color scaling based on percentiles
+finite_vals = vals[np.isfinite(vals)]
+if finite_vals.size > 0:
+    vmin = np.nanpercentile(finite_vals, 5)
+    vmax = np.nanpercentile(finite_vals, 95)
+else:
+    vmin, vmax = -5, 5
+
+# Create heatmap
+im = ax.imshow(vals, aspect='auto', cmap='RdYlGn_r', vmin=vmin, vmax=vmax)
+
+# Set ticks and labels
+ax.set_xticks(range(yoy_pivot.shape[1]))
+ax.set_xticklabels(yoy_pivot.columns.astype(str), fontweight='bold', fontsize=11)
+ax.set_yticks(range(12))
+ax.set_yticklabels(month_labels, fontweight='bold', fontsize=11)
+ax.set_xlabel('Year', fontweight='bold', fontsize=12)
+ax.set_ylabel('Month', fontweight='bold', fontsize=12)
+ax.set_title('Consumer Price Index - Year-on-Year Change (%)', 
+             fontweight='bold', fontsize=14, pad=20)
+
+# Annotate cells with values
+for i in range(yoy_pivot.shape[0]):
+    for j in range(yoy_pivot.shape[1]):
+        val = yoy_pivot.values[i, j]
+        if not np.isnan(val):
+            # Adaptive text color for readability
+            color_intensity = (val - vmin) / (vmax - vmin) if vmax != vmin else 0.5
+            text_color = 'white' if color_intensity < 0.3 or color_intensity > 0.7 else 'black'
+            ax.text(j, i, f"{val:.2f}", ha='center', va='center', 
+                   fontsize=9, color=text_color, fontweight='bold')
+
+# Add colorbar
+cbar = fig.colorbar(im, ax=ax)
+cbar.set_label('YoY Inflation (%)', fontweight='bold', fontsize=11)
+
+plt.tight_layout()
+plt.show()
+```
+
+## Month-on-Month Change
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 10
+#| fig-height: 6
+#| label: fig-mom-heatmap
+#| fig-cap: "Consumer Price Index - Month-on-Month Change Heatmap"
+
+# Create pivot table for MoM heatmap (using data already calculated from full df)
+mom_pivot = df_last_7_years.pivot_table(
+    values='CPI_MoM', 
+    index='Month', 
+    columns='Year',
+    aggfunc='first'
+)
+
+# Reindex to ensure all 12 months
+mom_pivot = mom_pivot.reindex(index=range(1, 13))
+
+# Create the heatmap using imshow
+fig, ax = plt.subplots(figsize=(10, 6))
+vals = mom_pivot.values
+
+# Dynamic color scaling based on percentiles
+finite_vals = vals[np.isfinite(vals)]
+if finite_vals.size > 0:
+    vmin = np.nanpercentile(finite_vals, 5)
+    vmax = np.nanpercentile(finite_vals, 95)
+else:
+    vmin, vmax = -2, 2
+
+# Create heatmap
+im = ax.imshow(vals, aspect='auto', cmap='RdYlGn_r', vmin=vmin, vmax=vmax)
+
+# Set ticks and labels
+ax.set_xticks(range(mom_pivot.shape[1]))
+ax.set_xticklabels(mom_pivot.columns.astype(str), fontweight='bold', fontsize=11)
+ax.set_yticks(range(12))
+ax.set_yticklabels(month_labels, fontweight='bold', fontsize=11)
+ax.set_xlabel('Year', fontweight='bold', fontsize=12)
+ax.set_ylabel('Month', fontweight='bold', fontsize=12)
+ax.set_title('Consumer Price Index - Month-on-Month Change (%)', 
+             fontweight='bold', fontsize=14, pad=20)
+
+# Annotate cells with values
+for i in range(mom_pivot.shape[0]):
+    for j in range(mom_pivot.shape[1]):
+        val = mom_pivot.values[i, j]
+        if not np.isnan(val):
+            # Adaptive text color for readability
+            color_intensity = (val - vmin) / (vmax - vmin) if vmax != vmin else 0.5
+            text_color = 'white' if color_intensity < 0.3 or color_intensity > 0.7 else 'black'
+            ax.text(j, i, f"{val:.2f}", ha='center', va='center', 
+                   fontsize=9, color=text_color, fontweight='bold')
+
+# Add colorbar
+cbar = fig.colorbar(im, ax=ax)
+cbar.set_label('MoM Change (%)', fontweight='bold', fontsize=11)
+
+plt.tight_layout()
+plt.show()
+```
+
+# Top 5 Changes
+
+
+```{python}
+#| echo: false
+#| warning: false
+
+# Exclude synthetic/calculated columns AND top-level aggregates
+meta_cols = ['time', 'Year', 'Month', 'Month_Name', 'CPI_YoY', 'CPI_MoM']
+
+# Exact column names to exclude (top-level aggregates and synthetic indices)
+EXCLUDE_EXACT = {
+    'Consumer Price Index',  # Too generic - overall CPI
+    'Consumer Food Price Index',  # We have detailed food categories
+    'Core Bottom Up', 
+    'Core Index', 
+    'CPI (ExVeggies)', 
+    'Core Ex TnC Index',
+    'Core Core Exc Index', 
+    'Custom Index 1', 
+    'Custom Index 2', 
+    'Exclusion Index',
+    'RBI Core Index', 
+    'Protein Index',
+    'Consumer Price Index: exclude Food & Beverages and Fuel & Light',
+    'Consumer Price Index: exclude Food and Beverages',
+    'Consumer Price Index: Food and Beverages',  # Aggregate - we want sub-categories
+    'Consumer Price Index: Miscellaneous',  # Aggregate - we want sub-categories
+    'Consumer Price Index: Clothing and Footwear'  # Aggregate - we want sub-categories
+}
+
+EXCLUDE_KEYWORDS = [
+    'Custom Index', 'Core Index', 'Core Bottom Up', 'Core Ex TnC',
+    'Core Core Exc', 'Exclusion Index', 'RBI Core Index', 'Protein Index',
+    '(ExVeggies)', 'exclude Food'
+]
+
+def is_excluded(colname: str) -> bool:
+    """Check if column should be excluded"""
+    # Check exact matches first
+    if colname in EXCLUDE_EXACT:
+        return True
+    # Check keywords
+    for kw in EXCLUDE_KEYWORDS:
+        if kw.lower() in colname.lower():
+            return True
+    return False
+
+# Get only granular CPI component columns
+candidates = [c for c in df.columns if c not in meta_cols]
+cpi_cols = [c for c in candidates if not is_excluded(c)]
+
+# Get latest and previous month indices
+latest_idx = df.index[-1]
+prev_idx = df.index[-2]
+
+latest_date = df.loc[latest_idx, 'time'].strftime('%B %Y')
+prev_date = df.loc[prev_idx, 'time'].strftime('%B %Y')
+
+# Calculate month-on-month changes for all components
+rows = []
+for col in cpi_cols:
+    prev_v = df.loc[prev_idx, col]
+    cur_v = df.loc[latest_idx, col]
+    if pd.notna(prev_v) and pd.notna(cur_v) and prev_v != 0:
+        change = ((cur_v - prev_v) / prev_v) * 100
+        # Only include if there's actual change (not zero or negligible)
+        if abs(change) > 0.01:  # Filter out negligible changes
+            rows.append({
+                'Category': col,
+                'MoM Change (%)': change
+            })
+
+# Create dataframe and sort by change
+changes_df = pd.DataFrame(rows).sort_values('MoM Change (%)', ascending=False)
+
+# Get top 5 increases and decreases (only if they exist)
+top_5_increases = changes_df[changes_df['MoM Change (%)'] > 0].head(5).copy()
+top_5_decreases = changes_df[changes_df['MoM Change (%)'] < 0].tail(5).copy()
+
+# Shorten category names for display
+def shorten_name(s, max_len=35):
+    """Shorten category names for better display with word wrapping"""
+    # Handle special case for overall CPI first
+    if s == 'Consumer Price Index':
+        return 'Overall CPI'
+    
+    # Remove nested prefixes iteratively (handles "Consumer Price Index: Food and Beverages: Fruits")
+    prefixes_to_remove = [
+        'Consumer Price Index: ',
+        'Food and Beverages: ',
+        'Miscellaneous: ',
+        'Clothing and Footwear: ',
+
+    ]
+    
+    # Keep removing prefixes until none match (handles nested structures)
+    changed = True
+    while changed:
+        changed = False
+        for prefix in prefixes_to_remove:
+            if s.startswith(prefix):
+                s = s[len(prefix):]
+                changed = True
+                break
+    
+    # If still too long, truncate intelligently
+    if len(s) > max_len:
+        s = s[:max_len-3] + '...'
+    return s
+
+top_5_increases['Category'] = top_5_increases['Category'].apply(shorten_name)
+top_5_decreases['Category'] = top_5_decreases['Category'].apply(shorten_name)
+
+# Combine for visualization
+combined = pd.concat([top_5_increases, top_5_decreases]).reset_index(drop=True)
+```
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 10
+#| fig-height: 8
+#| label: fig-top-changes
+#| fig-cap: "Top Inflationary and Deflationary Categories (Month-on-Month)"
+
+# Create figure with proper spacing
+fig, ax = plt.subplots(figsize=(10, 8))
+
+# Prepare data
+categories = list(top_5_increases['Category']) + list(top_5_decreases['Category'])
+changes = list(top_5_increases['MoM Change (%)']) + list(top_5_decreases['MoM Change (%)'])
+
+# Create positions for bars
+y_positions = np.arange(len(categories))
+
+# Color bars based on positive/negative
+colors = ['#d62728' if x > 0 else '#2ca02c' for x in changes]
+
+# Create horizontal bar chart
+bars = ax.barh(y_positions, changes, color=colors, alpha=0.85, edgecolor='black', linewidth=0.8)
+
+# Calculate x-axis range with padding for labels
+max_val = max(abs(min(changes)), abs(max(changes)))
+ax.set_xlim([-max_val * 1.3, max_val * 1.3])
+
+# Add value labels at the end of bars (inside plot area)
+for i, (pos, val) in enumerate(zip(y_positions, changes)):
+    if val > 0:
+        # Place label at the end of the bar for positive values
+        ax.text(val + max_val * 0.03, pos, f'{val:+.2f}%', 
+               va='center', ha='left', fontsize=9, fontweight='bold', color='black')
+    else:
+        # Place label at the end of the bar for negative values
+        ax.text(val - max_val * 0.03, pos, f'{val:+.2f}%', 
+               va='center', ha='right', fontsize=9, fontweight='bold', color='black')
+
+# Customize plot
+ax.set_yticks(y_positions)
+ax.set_yticklabels(categories, fontsize=9.5)
+ax.set_xlabel('Month-on-Month Change (%)', fontweight='bold', fontsize=11)
+ax.set_title(f'Top Price Movers: {prev_date} to {latest_date}', 
+             fontweight='bold', fontsize=13, pad=20)
+ax.axvline(x=0, color='black', linewidth=1.5, linestyle='-', alpha=0.7)
+ax.grid(axis='x', alpha=0.3, linestyle='--')
+
+# Add legend
+from matplotlib.patches import Patch
+legend_elements = [
+    Patch(facecolor='#d62728', alpha=0.85, edgecolor='black', label='Inflationary (Increase)'),
+    Patch(facecolor='#2ca02c', alpha=0.85, edgecolor='black', label='Deflationary (Decrease)')
+]
+ax.legend(handles=legend_elements, loc='lower right', frameon=True, fontsize=9, shadow=True)
+
+plt.tight_layout()
+plt.show()
+```
+
+## Key Observations
+
+```{python}
+#| echo: false
+#| output: asis
+
+# Generate dynamic observations only if we have data
+if len(top_5_increases) > 0 and len(top_5_decreases) > 0:
+    max_increase = top_5_increases['MoM Change (%)'].iloc[0]
+    max_increase_cat = top_5_increases['Category'].iloc[0]
+    max_decrease = top_5_decreases['MoM Change (%)'].iloc[0]
+    max_decrease_cat = top_5_decreases['Category'].iloc[0]
+    
+    print(f"- **{max_increase_cat}** experienced the highest inflationary pressure with a **{max_increase:.2f}%** increase.")
+    print(f"\n- **{max_decrease_cat}** showed the largest deflationary trend with a **{max_decrease:.2f}%** decrease.")
+
+elif len(top_5_increases) > 0:
+    max_increase = top_5_increases['MoM Change (%)'].iloc[0]
+    max_increase_cat = top_5_increases['Category'].iloc[0]
+    print(f"- **{max_increase_cat}** experienced the highest inflationary pressure with a **{max_increase:.2f}%** increase.")
+    print(f"\n- No significant deflationary trends observed in the top categories this month.")
+elif len(top_5_decreases) > 0:
+    max_decrease = top_5_decreases['MoM Change (%)'].iloc[0]
+    max_decrease_cat = top_5_decreases['Category'].iloc[0]
+    print(f"- **{max_decrease_cat}** showed the largest deflationary trend with a **{max_decrease:.2f}%** decrease.")
+    print(f"\n- No significant inflationary trends observed in the top categories this month.")
+else:
+    print("- No significant price movements observed in this period.")
+```
+
+## Year-on-Year Top Movers
+
+```{python}
+#| echo: false
+#| warning: false
+
+# Get latest and year-ago indices for YoY calculation
+latest_idx_yoy = df.index[-1]
+year_ago_idx = df.index[-13] if len(df) >= 13 else df.index[0]
+
+latest_date_yoy = df.loc[latest_idx_yoy, 'time'].strftime('%B %Y')
+year_ago_date_yoy = df.loc[year_ago_idx, 'time'].strftime('%B %Y')
+
+# Calculate year-on-year changes for all components
+rows_yoy = []
+for col in cpi_cols:
+    year_ago_v = df.loc[year_ago_idx, col]
+    cur_v = df.loc[latest_idx_yoy, col]
+    if pd.notna(year_ago_v) and pd.notna(cur_v) and year_ago_v != 0:
+        change = ((cur_v - year_ago_v) / year_ago_v) * 100
+        # Only include if there's actual change (not zero or negligible)
+        if abs(change) > 0.01:  # Filter out negligible changes
+            rows_yoy.append({
+                'Category': col,
+                'YoY Change (%)': change
+            })
+
+# Create dataframe and sort by change
+changes_yoy_df = pd.DataFrame(rows_yoy).sort_values('YoY Change (%)', ascending=False)
+
+# Get top 5 increases and decreases (only if they exist)
+top_5_increases_yoy = changes_yoy_df[changes_yoy_df['YoY Change (%)'] > 0].head(5).copy()
+top_5_decreases_yoy = changes_yoy_df[changes_yoy_df['YoY Change (%)'] < 0].tail(5).copy()
+
+# Shorten category names for display
+top_5_increases_yoy['Category'] = top_5_increases_yoy['Category'].apply(shorten_name)
+top_5_decreases_yoy['Category'] = top_5_decreases_yoy['Category'].apply(shorten_name)
+
+# Combine for visualization
+combined_yoy = pd.concat([top_5_increases_yoy, top_5_decreases_yoy]).reset_index(drop=True)
+```
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 10
+#| fig-height: 8
+#| label: fig-top-changes-yoy
+#| fig-cap: "Top Inflationary and Deflationary Categories (Year-on-Year)"
+
+# Create figure with proper spacing
+fig, ax = plt.subplots(figsize=(10, 8))
+
+# Prepare data
+categories_yoy = list(top_5_increases_yoy['Category']) + list(top_5_decreases_yoy['Category'])
+changes_yoy = list(top_5_increases_yoy['YoY Change (%)']) + list(top_5_decreases_yoy['YoY Change (%)'])
+
+# Create positions for bars
+y_positions_yoy = np.arange(len(categories_yoy))
+
+# Color bars based on positive/negative
+colors_yoy = ['#d62728' if x > 0 else '#2ca02c' for x in changes_yoy]
+
+# Create horizontal bar chart
+bars = ax.barh(y_positions_yoy, changes_yoy, color=colors_yoy, alpha=0.85, edgecolor='black', linewidth=0.8)
+
+# Calculate x-axis range with padding for labels
+max_val_yoy = max(abs(min(changes_yoy)), abs(max(changes_yoy)))
+ax.set_xlim([-max_val_yoy * 1.3, max_val_yoy * 1.3])
+
+# Add value labels at the end of bars (inside plot area)
+for i, (pos, val) in enumerate(zip(y_positions_yoy, changes_yoy)):
+    if val > 0:
+        # Place label at the end of the bar for positive values
+        ax.text(val + max_val_yoy * 0.03, pos, f'{val:+.2f}%', 
+               va='center', ha='left', fontsize=9, fontweight='bold', color='black')
+    else:
+        # Place label at the end of the bar for negative values
+        ax.text(val - max_val_yoy * 0.03, pos, f'{val:+.2f}%', 
+               va='center', ha='right', fontsize=9, fontweight='bold', color='black')
+
+# Customize plot
+ax.set_yticks(y_positions_yoy)
+ax.set_yticklabels(categories_yoy, fontsize=9.5)
+ax.set_xlabel('Year-on-Year Change (%)', fontweight='bold', fontsize=11)
+ax.set_title(f'Top Price Movers (YoY): {year_ago_date_yoy} to {latest_date_yoy}', 
+             fontweight='bold', fontsize=13, pad=20)
+ax.axvline(x=0, color='black', linewidth=1.5, linestyle='-', alpha=0.7)
+ax.grid(axis='x', alpha=0.3, linestyle='--')
+
+# Add legend
+legend_elements_yoy = [
+    Patch(facecolor='#d62728', alpha=0.85, edgecolor='black', label='Inflationary (Increase)'),
+    Patch(facecolor='#2ca02c', alpha=0.85, edgecolor='black', label='Deflationary (Decrease)')
+]
+ax.legend(handles=legend_elements_yoy, loc='lower right', frameon=True, fontsize=9, shadow=True)
+
+plt.tight_layout()
+plt.show()
+```
+
+### Key Observations (YoY)
+
+```{python}
+#| echo: false
+#| output: asis
+
+# Generate dynamic observations only if we have data
+if len(top_5_increases_yoy) > 0 and len(top_5_decreases_yoy) > 0:
+    max_increase_yoy = top_5_increases_yoy['YoY Change (%)'].iloc[0]
+    max_increase_cat_yoy = top_5_increases_yoy['Category'].iloc[0]
+    max_decrease_yoy = top_5_decreases_yoy['YoY Change (%)'].iloc[0]
+    max_decrease_cat_yoy = top_5_decreases_yoy['Category'].iloc[0]
+    
+    print(f"- **{max_increase_cat_yoy}** experienced the highest year-on-year inflationary pressure with a **{max_increase_yoy:.2f}%** increase.")
+    print(f"\n- **{max_decrease_cat_yoy}** showed the largest year-on-year deflationary trend with a **{max_decrease_yoy:.2f}%** decrease.")
+
+elif len(top_5_increases_yoy) > 0:
+    max_increase_yoy = top_5_increases_yoy['YoY Change (%)'].iloc[0]
+    max_increase_cat_yoy = top_5_increases_yoy['Category'].iloc[0]
+    print(f"- **{max_increase_cat_yoy}** experienced the highest year-on-year inflationary pressure with a **{max_increase_yoy:.2f}%** increase.")
+    print(f"\n- No significant year-on-year deflationary trends observed in the top categories.")
+elif len(top_5_decreases_yoy) > 0:
+    max_decrease_yoy = top_5_decreases_yoy['YoY Change (%)'].iloc[0]
+    max_decrease_cat_yoy = top_5_decreases_yoy['Category'].iloc[0]
+    print(f"- **{max_decrease_cat_yoy}** showed the largest year-on-year deflationary trend with a **{max_decrease_yoy:.2f}%** decrease.")
+    print(f"\n- No significant year-on-year inflationary trends observed in the top categories.")
+else:
+    print("- No significant year-on-year price movements observed in this period.")
+```
+
+# Inflation Dispersion Analysis
+
+This section analyzes how inflation is distributed across different CPI components, showing whether price changes are broad-based or concentrated in specific items.
+
+```{python}
+#| echo: false
+#| warning: false
+
+# Prepare dispersion data
+# Filter to granular CPI components (exclude aggregate indices)
+meta_cols = ['time', 'Year', 'Month', 'Month_Name', 'CPI_YoY', 'CPI_MoM']
+
+# Get granular CPI columns (reuse existing exclusion logic)
+candidates = [c for c in df.columns if c not in meta_cols]
+cpi_components = [c for c in candidates if not is_excluded(c)]
+
+# Calculate YoY for all components
+component_yoy = pd.DataFrame({'time': df['time']})
+for col in cpi_components:
+    component_yoy[col] = df[col].pct_change(12) * 100
+
+# Filter to last 7 years
+current_year = df['Year'].max()
+df_dispersion = component_yoy[pd.to_datetime(component_yoy['time']).dt.year >= current_year - 6].copy()
+
+# Define inflation brackets (simplified)
+def categorize_inflation(value):
+    if pd.isna(value):
+        return None
+    elif value < 0:
+        return 'Deflation (< 0%)'
+    elif value < 2:
+        return 'Low (0-2%)'
+    elif value < 4:
+        return 'Moderate (2-4%)'
+    elif value < 6:
+        return 'High (4-6%)'
+    else:
+        return 'Very High (> 6%)'
+
+# Create dispersion dataframe
+dispersion_data = []
+for idx, row in df_dispersion.iterrows():
+    time_val = row['time']
+    values = [row[col] for col in cpi_components if pd.notna(row[col])]
+    
+    # Categorize each component
+    categories = [categorize_inflation(v) for v in values if categorize_inflation(v) is not None]
+    
+    # Count items in each bracket
+    from collections import Counter
+    counts = Counter(categories)
+    
+    dispersion_data.append({
+        'time': time_val,
+        'Deflation (< 0%)': counts.get('Deflation (< 0%)', 0),
+        'Low (0-2%)': counts.get('Low (0-2%)', 0),
+        'Moderate (2-4%)': counts.get('Moderate (2-4%)', 0),
+        'High (4-6%)': counts.get('High (4-6%)', 0),
+        'Very High (> 6%)': counts.get('Very High (> 6%)', 0),
+        'Total': len(categories)
+    })
+
+disp_df = pd.DataFrame(dispersion_data)
+
+# Calculate percentages
+for cat in ['Deflation (< 0%)', 'Low (0-2%)', 'Moderate (2-4%)', 'High (4-6%)', 'Very High (> 6%)']:
+    disp_df[f'{cat}_pct'] = (disp_df[cat] / disp_df['Total']) * 100
+```
+
+## Distribution Over Time (Normalized)
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 14
+#| fig-height: 8
+#| label: fig-dispersion-normalized
+#| fig-cap: "Inflation Dispersion - Percentage of CPI Components by Bracket"
+
+# Create stacked area chart (100% normalized)
+fig, ax = plt.subplots(figsize=(14, 8))
+
+categories = ['Deflation (< 0%)', 'Low (0-2%)', 'Moderate (2-4%)', 'High (4-6%)', 'Very High (> 6%)']
+colors = ['#3182bd', '#9ecae1', '#ffeda0', '#feb24c', '#f03b20']
+
+# Plot stacked area
+ax.stackplot(disp_df['time'], 
+             disp_df['Deflation (< 0%)_pct'],
+             disp_df['Low (0-2%)_pct'],
+             disp_df['Moderate (2-4%)_pct'],
+             disp_df['High (4-6%)_pct'],
+             disp_df['Very High (> 6%)_pct'],
+             labels=categories,
+             colors=colors,
+             alpha=0.85)
+
+# Add RBI target band reference
+ax.axhline(y=50, color='red', linewidth=1.5, linestyle='--', alpha=0.4)
+
+# Get latest values for annotations
+latest_row = disp_df.iloc[-1]
+latest_time = disp_df['time'].iloc[-1]
+
+# Calculate cumulative y-positions for annotations (stacked values)
+cumulative_pcts = [0]
+for cat in categories:
+    cumulative_pcts.append(cumulative_pcts[-1] + latest_row[f'{cat}_pct'])
+
+# Add annotations at the right edge (latest month)
+for i, cat in enumerate(categories):
+    # Calculate center position of each bracket
+    y_center = (cumulative_pcts[i] + cumulative_pcts[i+1]) / 2
+    pct_val = latest_row[f'{cat}_pct']
+    count_val = latest_row[cat]
+    
+    # Only annotate if bracket is visible (>2%)
+    if pct_val > 2:
+        # Add text annotation on the right side
+        ax.text(latest_time, y_center, f'{pct_val:.1f}%\n({int(count_val)})', 
+                ha='left', va='center', fontsize=9, fontweight='bold',
+                color='white' if i in [0, 4] else 'black',  # White text for dark colors
+                bbox=dict(boxstyle='round,pad=0.3', facecolor=colors[i], 
+                         edgecolor='black', alpha=0.7, linewidth=0.8))
+
+# Enhanced legend with current values
+legend_labels = [f'{cat}: {int(latest_row[cat])} ({latest_row[f"{cat}_pct"]:.1f}%)' 
+                 for cat in categories]
+legend_labels.append('50% threshold')
+
+# Styling
+ax.set_xlabel('Time Period', fontweight='bold', fontsize=13)
+ax.set_ylabel('Percentage of CPI Components (%)', fontweight='bold', fontsize=13)
+ax.set_title('Inflation Dispersion: Distribution of CPI Components by Inflation Bracket (Normalized)', 
+             fontweight='bold', fontsize=15, pad=20)
+ax.set_ylim(0, 100)
+ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.7)
+
+# Create custom legend
+from matplotlib.patches import Patch
+legend_elements = [Patch(facecolor=colors[i], alpha=0.85, edgecolor='black', 
+                         label=legend_labels[i]) for i in range(len(categories))]
+legend_elements.append(plt.Line2D([0], [0], color='red', linewidth=1.5, 
+                                  linestyle='--', alpha=0.6, label='50% threshold'))
+ax.legend(handles=legend_elements, loc='upper left', fontsize=10, 
+          frameon=True, shadow=True, fancybox=True, ncol=2)
+
+# Format x-axis
+import matplotlib.dates as mdates
+ax.xaxis.set_major_locator(mdates.YearLocator())
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+ax.xaxis.set_minor_locator(mdates.MonthLocator((1, 7)))
+plt.xticks(rotation=0, ha='center', fontweight='bold')
+plt.yticks(fontweight='bold')
+
+plt.tight_layout()
+plt.show()
+```
+
+## Recent Trends (Last 3 Years)
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 14
+#| fig-height: 8
+#| label: fig-dispersion-normalized-3yr
+#| fig-cap: "Inflation Dispersion - Last 3 Years (Normalized)"
+
+# Filter to last 3 years for more detailed view
+current_year_disp = pd.to_datetime(disp_df['time']).dt.year.max()
+disp_df_3yr = disp_df[pd.to_datetime(disp_df['time']).dt.year >= current_year_disp - 2].copy()
+
+# Create stacked area chart (100% normalized) for last 3 years
+fig, ax = plt.subplots(figsize=(14, 8))
+
+# Plot stacked area
+ax.stackplot(disp_df_3yr['time'], 
+             disp_df_3yr['Deflation (< 0%)_pct'],
+             disp_df_3yr['Low (0-2%)_pct'],
+             disp_df_3yr['Moderate (2-4%)_pct'],
+             disp_df_3yr['High (4-6%)_pct'],
+             disp_df_3yr['Very High (> 6%)_pct'],
+             labels=categories,
+             colors=colors,
+             alpha=0.85)
+
+# Add RBI target band reference
+ax.axhline(y=50, color='red', linewidth=1.5, linestyle='--', alpha=0.4)
+
+# Get latest values for annotations (from 3yr data)
+latest_row_3yr = disp_df_3yr.iloc[-1]
+latest_time_3yr = disp_df_3yr['time'].iloc[-1]
+
+# Calculate cumulative y-positions for annotations (stacked values)
+cumulative_pcts_3yr = [0]
+for cat in categories:
+    cumulative_pcts_3yr.append(cumulative_pcts_3yr[-1] + latest_row_3yr[f'{cat}_pct'])
+
+# Add annotations at the right edge (latest month)
+for i, cat in enumerate(categories):
+    # Calculate center position of each bracket
+    y_center = (cumulative_pcts_3yr[i] + cumulative_pcts_3yr[i+1]) / 2
+    pct_val = latest_row_3yr[f'{cat}_pct']
+    count_val = latest_row_3yr[cat]
+    
+    # Only annotate if bracket is visible (>2%)
+    if pct_val > 2:
+        # Add text annotation on the right side
+        ax.text(latest_time_3yr, y_center, f'{pct_val:.1f}%\n({int(count_val)})', 
+                ha='left', va='center', fontsize=9, fontweight='bold',
+                color='white' if i in [0, 4] else 'black',
+                bbox=dict(boxstyle='round,pad=0.3', facecolor=colors[i], 
+                         edgecolor='black', alpha=0.7, linewidth=0.8))
+
+# Enhanced legend with current values
+legend_labels_3yr = [f'{cat}: {int(latest_row_3yr[cat])} ({latest_row_3yr[f"{cat}_pct"]:.1f}%)' 
+                     for cat in categories]
+
+# Styling
+ax.set_xlabel('Time Period', fontweight='bold', fontsize=13)
+ax.set_ylabel('Percentage of CPI Components (%)', fontweight='bold', fontsize=13)
+ax.set_title('Inflation Dispersion: Recent Trends (Last 3 Years) - Normalized', 
+             fontweight='bold', fontsize=15, pad=20)
+ax.set_ylim(0, 100)
+ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.7)
+
+# Create custom legend
+legend_elements_3yr = [Patch(facecolor=colors[i], alpha=0.85, edgecolor='black', 
+                             label=legend_labels_3yr[i]) for i in range(len(categories))]
+legend_elements_3yr.append(plt.Line2D([0], [0], color='red', linewidth=1.5, 
+                                      linestyle='--', alpha=0.6, label='50% threshold'))
+ax.legend(handles=legend_elements_3yr, loc='upper left', fontsize=10, 
+          frameon=True, shadow=True, fancybox=True, ncol=2)
+
+# Format x-axis - more granular for 3 years
+ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=(1, 7)))  # Jan and Jul
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+ax.xaxis.set_minor_locator(mdates.MonthLocator())
+plt.xticks(rotation=45, ha='right', fontweight='bold')
+plt.yticks(fontweight='bold')
+
+plt.tight_layout()
+plt.show()
+```
+
+## Distribution Over Time (Absolute Counts)
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 14
+#| fig-height: 8
+#| label: fig-dispersion-absolute
+#| fig-cap: "Inflation Dispersion - Absolute Count of CPI Components by Bracket"
+
+# Create stacked area chart (absolute counts)
+fig, ax = plt.subplots(figsize=(14, 8))
+
+# Plot stacked area
+ax.stackplot(disp_df['time'], 
+             disp_df['Deflation (< 0%)'],
+             disp_df['Low (0-2%)'],
+             disp_df['Moderate (2-4%)'],
+             disp_df['High (4-6%)'],
+             disp_df['Very High (> 6%)'],
+             labels=categories,
+             colors=colors,
+             alpha=0.85)
+
+# Get latest values for annotations
+latest_row_abs = disp_df.iloc[-1]
+latest_time_abs = disp_df['time'].iloc[-1]
+
+# Calculate cumulative counts for annotations (stacked values)
+cumulative_counts = [0]
+for cat in categories:
+    cumulative_counts.append(cumulative_counts[-1] + latest_row_abs[cat])
+
+# Add annotations at the right edge (latest month)
+for i, cat in enumerate(categories):
+    # Calculate center position of each bracket
+    y_center = (cumulative_counts[i] + cumulative_counts[i+1]) / 2
+    count_val = latest_row_abs[cat]
+    pct_val = latest_row_abs[f'{cat}_pct']
+    
+    # Only annotate if bracket has items
+    if count_val > 0:
+        # Add text annotation on the right side
+        ax.text(latest_time_abs, y_center, f'{int(count_val)}\n({pct_val:.1f}%)', 
+                ha='left', va='center', fontsize=9, fontweight='bold',
+                color='white' if i in [0, 4] else 'black',
+                bbox=dict(boxstyle='round,pad=0.3', facecolor=colors[i], 
+                         edgecolor='black', alpha=0.7, linewidth=0.8))
+
+# Enhanced legend with current values
+legend_labels_abs = [f'{cat}: {int(latest_row_abs[cat])} ({latest_row_abs[f"{cat}_pct"]:.1f}%)' 
+                     for cat in categories]
+
+# Styling
+ax.set_xlabel('Time Period', fontweight='bold', fontsize=13)
+ax.set_ylabel('Number of CPI Components', fontweight='bold', fontsize=13)
+ax.set_title('Inflation Dispersion: Count of CPI Components by Inflation Bracket (Absolute)', 
+             fontweight='bold', fontsize=15, pad=20)
+ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.7)
+
+# Create custom legend
+legend_elements_abs = [Patch(facecolor=colors[i], alpha=0.85, edgecolor='black', 
+                             label=legend_labels_abs[i]) for i in range(len(categories))]
+ax.legend(handles=legend_elements_abs, loc='upper left', fontsize=10, 
+          frameon=True, shadow=True, fancybox=True, ncol=2)
+
+# Format x-axis
+ax.xaxis.set_major_locator(mdates.YearLocator())
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+ax.xaxis.set_minor_locator(mdates.MonthLocator((1, 7)))
+plt.xticks(rotation=0, ha='center', fontweight='bold')
+plt.yticks(fontweight='bold')
+
+plt.tight_layout()
+plt.show()
+```
+
+## Recent Trends (Last 3 Years - Absolute)
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 14
+#| fig-height: 8
+#| label: fig-dispersion-absolute-3yr
+#| fig-cap: "Inflation Dispersion - Last 3 Years (Absolute Counts)"
+
+# Create stacked area chart (absolute counts) for last 3 years
+fig, ax = plt.subplots(figsize=(14, 8))
+
+# Plot stacked area
+ax.stackplot(disp_df_3yr['time'], 
+             disp_df_3yr['Deflation (< 0%)'],
+             disp_df_3yr['Low (0-2%)'],
+             disp_df_3yr['Moderate (2-4%)'],
+             disp_df_3yr['High (4-6%)'],
+             disp_df_3yr['Very High (> 6%)'],
+             labels=categories,
+             colors=colors,
+             alpha=0.85)
+
+# Get latest values for annotations (from 3yr data)
+latest_row_abs_3yr = disp_df_3yr.iloc[-1]
+latest_time_abs_3yr = disp_df_3yr['time'].iloc[-1]
+
+# Calculate cumulative counts for annotations (stacked values)
+cumulative_counts_3yr = [0]
+for cat in categories:
+    cumulative_counts_3yr.append(cumulative_counts_3yr[-1] + latest_row_abs_3yr[cat])
+
+# Add annotations at the right edge (latest month)
+for i, cat in enumerate(categories):
+    # Calculate center position of each bracket
+    y_center = (cumulative_counts_3yr[i] + cumulative_counts_3yr[i+1]) / 2
+    count_val = latest_row_abs_3yr[cat]
+    pct_val = latest_row_abs_3yr[f'{cat}_pct']
+    
+    # Only annotate if bracket has items
+    if count_val > 0:
+        # Add text annotation on the right side
+        ax.text(latest_time_abs_3yr, y_center, f'{int(count_val)}\n({pct_val:.1f}%)', 
+                ha='left', va='center', fontsize=9, fontweight='bold',
+                color='white' if i in [0, 4] else 'black',
+                bbox=dict(boxstyle='round,pad=0.3', facecolor=colors[i], 
+                         edgecolor='black', alpha=0.7, linewidth=0.8))
+
+# Enhanced legend with current values
+legend_labels_abs_3yr = [f'{cat}: {int(latest_row_abs_3yr[cat])} ({latest_row_abs_3yr[f"{cat}_pct"]:.1f}%)' 
+                         for cat in categories]
+
+# Styling
+ax.set_xlabel('Time Period', fontweight='bold', fontsize=13)
+ax.set_ylabel('Number of CPI Components', fontweight='bold', fontsize=13)
+ax.set_title('Inflation Dispersion: Recent Trends (Last 3 Years) - Absolute Counts', 
+             fontweight='bold', fontsize=15, pad=20)
+ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.7)
+
+# Create custom legend
+legend_elements_abs_3yr = [Patch(facecolor=colors[i], alpha=0.85, edgecolor='black', 
+                                 label=legend_labels_abs_3yr[i]) for i in range(len(categories))]
+ax.legend(handles=legend_elements_abs_3yr, loc='upper left', fontsize=10, 
+          frameon=True, shadow=True, fancybox=True, ncol=2)
+
+# Format x-axis - more granular for 3 years
+ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=(1, 7)))  # Jan and Jul
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+ax.xaxis.set_minor_locator(mdates.MonthLocator())
+plt.xticks(rotation=45, ha='right', fontweight='bold')
+plt.yticks(fontweight='bold')
+
+plt.tight_layout()
+plt.show()
+```
+
+
+
+## Annualized MoM Threshold Analysis
+
+
+
+```{python}
+#| echo: false
+#| warning: false
+
+# Get current month and same month last year
+latest_data = disp_df.iloc[-1]
+year_ago_data = disp_df.iloc[-13] if len(disp_df) >= 13 else disp_df.iloc[0]
+
+latest_date = pd.to_datetime(latest_data['time']).strftime('%B %Y')
+year_ago_date = pd.to_datetime(year_ago_data['time']).strftime('%B %Y')
+
+# Calculate MoM for all components
+component_mom = pd.DataFrame({'time': df['time']})
+for col in cpi_components:
+    component_mom[col] = df[col].pct_change(1) * 100  # MoM as percentage
+
+# Filter to last 7 years
+df_mom_dispersion = component_mom[pd.to_datetime(component_mom['time']).dt.year >= current_year - 6].copy()
+
+# Create dispersion dataframes for two thresholds
+# Threshold 1: 0.5% MoM ≈ 6% annualized
+# Threshold 2: 0.33% MoM ≈ 4% annualized
+
+threshold_6_data = []
+threshold_4_data = []
+
+for idx, row in df_mom_dispersion.iterrows():
+    time_val = row['time']
+    values = [row[col] for col in cpi_components if pd.notna(row[col])]
+    
+    if len(values) > 0:
+        # 6% threshold (0.5% MoM)
+        below_6 = sum(1 for v in values if v < 0.5)
+        above_6 = sum(1 for v in values if v >= 0.5)
+        total = len(values)
+        
+        threshold_6_data.append({
+            'time': time_val,
+            'Below_0.5': below_6,
+            'Above_0.5': above_6,
+            'Total': total,
+            'Below_0.5_pct': (below_6 / total) * 100,
+            'Above_0.5_pct': (above_6 / total) * 100
+        })
+        
+        # 4% threshold (0.33% MoM)
+        below_4 = sum(1 for v in values if v < 0.33)
+        above_4 = sum(1 for v in values if v >= 0.33)
+        
+        threshold_4_data.append({
+            'time': time_val,
+            'Below_0.33': below_4,
+            'Above_0.33': above_4,
+            'Total': total,
+            'Below_0.33_pct': (below_4 / total) * 100,
+            'Above_0.33_pct': (above_4 / total) * 100
+        })
+
+thresh_6_df = pd.DataFrame(threshold_6_data)
+thresh_4_df = pd.DataFrame(threshold_4_data)
+```
+
+### 6% Annualized Threshold (0.5% MoM)
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 15
+#| fig-height: 7
+#| label: fig-mom-threshold-6
+#| fig-cap: "Inflation Breadth: Share of Components Above/Below 6% Annualized Pace"
+
+# Create stacked area chart for 6% threshold
+fig, ax = plt.subplots(figsize=(15, 7))
+
+# Colors: Blue (below) and Orange (above)
+colors_thresh = ['#6baed6', '#feb24c']
+categories_thresh = ['Below 0.5% MoM', 'Above 0.5% MoM']
+
+# Plot stacked area
+ax.stackplot(thresh_6_df['time'], 
+             thresh_6_df['Below_0.5_pct'],
+             thresh_6_df['Above_0.5_pct'],
+             labels=categories_thresh,
+             colors=colors_thresh,
+             alpha=0.85)
+
+# Add 50% reference line
+ax.axhline(y=50, color='black', linewidth=1.5, linestyle='--', alpha=0.5)
+
+# Add shaded "balanced" zone (45-55%)
+ax.axhspan(45, 55, color='gray', alpha=0.1, zorder=0)
+
+# Get latest values for annotations
+latest_6 = thresh_6_df.iloc[-1]
+latest_time_6 = thresh_6_df['time'].iloc[-1]
+
+# Calculate center positions for annotations
+y_below = latest_6['Below_0.5_pct'] / 2
+y_above = latest_6['Below_0.5_pct'] + (latest_6['Above_0.5_pct'] / 2)
+
+# Add annotations at right edge
+if latest_6['Below_0.5_pct'] > 5:  # Only if visible
+    ax.text(latest_time_6, y_below, 
+            f"{latest_6['Below_0.5_pct']:.1f}%\n({int(latest_6['Below_0.5'])})", 
+            ha='left', va='center', fontsize=10, fontweight='bold', color='black',
+            bbox=dict(boxstyle='round,pad=0.4', facecolor=colors_thresh[0], 
+                     edgecolor='black', alpha=0.8, linewidth=1))
+
+if latest_6['Above_0.5_pct'] > 5:  # Only if visible
+    ax.text(latest_time_6, y_above, 
+            f"{latest_6['Above_0.5_pct']:.1f}%\n({int(latest_6['Above_0.5'])})", 
+            ha='left', va='center', fontsize=10, fontweight='bold', color='black',
+            bbox=dict(boxstyle='round,pad=0.4', facecolor=colors_thresh[1], 
+                     edgecolor='black', alpha=0.8, linewidth=1))
+
+# Enhanced legend with current values
+legend_labels_6 = [
+    f"Below 0.5% MoM (< 6% ann.): {int(latest_6['Below_0.5'])} ({latest_6['Below_0.5_pct']:.1f}%)",
+    f"Above 0.5% MoM (≥ 6% ann.): {int(latest_6['Above_0.5'])} ({latest_6['Above_0.5_pct']:.1f}%)"
+]
+
+# Styling
+ax.set_xlabel('Time Period', fontweight='bold', fontsize=13)
+ax.set_ylabel('Percentage of CPI Components (%)', fontweight='bold', fontsize=13)
+ax.set_title('Inflation Breadth: Share of Components Above/Below 6% Annualized Pace', 
+             fontweight='bold', fontsize=15, pad=20)
+ax.text(0.5, 1.02, 'Based on Month-on-Month inflation ≥0.5% (compounded to ~6% annually)', 
+        transform=ax.transAxes, ha='center', fontsize=10, style='italic', color='gray')
+ax.set_ylim(0, 100)
+ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.7)
+
+# Create custom legend
+legend_elements_6 = [
+    Patch(facecolor=colors_thresh[0], alpha=0.85, edgecolor='black', label=legend_labels_6[0]),
+    Patch(facecolor=colors_thresh[1], alpha=0.85, edgecolor='black', label=legend_labels_6[1]),
+    plt.Line2D([0], [0], color='black', linewidth=1.5, linestyle='--', alpha=0.5, label='50% threshold')
+]
+ax.legend(handles=legend_elements_6, loc='upper left', fontsize=10, 
+          frameon=True, shadow=True, fancybox=True)
+
+# Format x-axis
+ax.xaxis.set_major_locator(mdates.YearLocator())
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+ax.xaxis.set_minor_locator(mdates.MonthLocator((1, 7)))
+plt.xticks(rotation=0, ha='center', fontweight='bold')
+plt.yticks(fontweight='bold')
+
+plt.tight_layout()
+plt.show()
+```
+
+### 4% Annualized Threshold (0.33% MoM)
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 15
+#| fig-height: 7
+#| label: fig-mom-threshold-4
+#| fig-cap: "Inflation Breadth: Share of Components Above/Below 4% Annualized Pace"
+
+# Create stacked area chart for 4% threshold
+fig, ax = plt.subplots(figsize=(15, 7))
+
+categories_thresh_4 = ['Below 0.33% MoM', 'Above 0.33% MoM']
+
+# Plot stacked area
+ax.stackplot(thresh_4_df['time'], 
+             thresh_4_df['Below_0.33_pct'],
+             thresh_4_df['Above_0.33_pct'],
+             labels=categories_thresh_4,
+             colors=colors_thresh,
+             alpha=0.85)
+
+# Add 50% reference line
+ax.axhline(y=50, color='black', linewidth=1.5, linestyle='--', alpha=0.5)
+
+# Add shaded "balanced" zone (45-55%)
+ax.axhspan(45, 55, color='gray', alpha=0.1, zorder=0)
+
+# Get latest values for annotations
+latest_4 = thresh_4_df.iloc[-1]
+latest_time_4 = thresh_4_df['time'].iloc[-1]
+
+# Calculate center positions for annotations
+y_below_4 = latest_4['Below_0.33_pct'] / 2
+y_above_4 = latest_4['Below_0.33_pct'] + (latest_4['Above_0.33_pct'] / 2)
+
+# Add annotations at right edge
+if latest_4['Below_0.33_pct'] > 5:  # Only if visible
+    ax.text(latest_time_4, y_below_4, 
+            f"{latest_4['Below_0.33_pct']:.1f}%\n({int(latest_4['Below_0.33'])})", 
+            ha='left', va='center', fontsize=10, fontweight='bold', color='black',
+            bbox=dict(boxstyle='round,pad=0.4', facecolor=colors_thresh[0], 
+                     edgecolor='black', alpha=0.8, linewidth=1))
+
+if latest_4['Above_0.33_pct'] > 5:  # Only if visible
+    ax.text(latest_time_4, y_above_4, 
+            f"{latest_4['Above_0.33_pct']:.1f}%\n({int(latest_4['Above_0.33'])})", 
+            ha='left', va='center', fontsize=10, fontweight='bold', color='black',
+            bbox=dict(boxstyle='round,pad=0.4', facecolor=colors_thresh[1], 
+                     edgecolor='black', alpha=0.8, linewidth=1))
+
+# Enhanced legend with current values
+legend_labels_4 = [
+    f"Below 0.33% MoM (< 4% ann.): {int(latest_4['Below_0.33'])} ({latest_4['Below_0.33_pct']:.1f}%)",
+    f"Above 0.33% MoM (≥ 4% ann.): {int(latest_4['Above_0.33'])} ({latest_4['Above_0.33_pct']:.1f}%)"
+]
+
+# Styling
+ax.set_xlabel('Time Period', fontweight='bold', fontsize=13)
+ax.set_ylabel('Percentage of CPI Components (%)', fontweight='bold', fontsize=13)
+ax.set_title('Inflation Breadth: Share of Components Above/Below 4% Annualized Pace', 
+             fontweight='bold', fontsize=15, pad=20)
+ax.text(0.5, 1.02, 'Based on Month-on-Month inflation ≥0.33% (compounded to ~4% annually)', 
+        transform=ax.transAxes, ha='center', fontsize=10, style='italic', color='gray')
+ax.set_ylim(0, 100)
+ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.7)
+
+# Create custom legend
+legend_elements_4 = [
+    Patch(facecolor=colors_thresh[0], alpha=0.85, edgecolor='black', label=legend_labels_4[0]),
+    Patch(facecolor=colors_thresh[1], alpha=0.85, edgecolor='black', label=legend_labels_4[1]),
+    plt.Line2D([0], [0], color='black', linewidth=1.5, linestyle='--', alpha=0.5, label='50% threshold')
+]
+ax.legend(handles=legend_elements_4, loc='upper left', fontsize=10, 
+          frameon=True, shadow=True, fancybox=True)
+
+# Format x-axis
+ax.xaxis.set_major_locator(mdates.YearLocator())
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+ax.xaxis.set_minor_locator(mdates.MonthLocator((1, 7)))
+plt.xticks(rotation=0, ha='center', fontweight='bold')
+plt.yticks(fontweight='bold')
+
+plt.tight_layout()
+plt.show()
+```
+
+### MoM Threshold Insights
+
+```{python}
+#| echo: false
+#| output: asis
+
+# Generate insights for MoM thresholds
+latest_6_thresh = thresh_6_df.iloc[-1]
+latest_4_thresh = thresh_4_df.iloc[-1]
+
+# Get date for latest month
+latest_date_thresh = pd.to_datetime(latest_6_thresh['time']).strftime('%B %Y')
+
+print(f"### Current Month ({latest_date_thresh})")
+
+# 6% threshold insights
+print(f"\n#### 6% Annualized Threshold")
+pct_above_6_mom = latest_6_thresh['Above_0.5_pct']
+count_above_6_mom = int(latest_6_thresh['Above_0.5'])
+
+if pct_above_6_mom > 70:
+    breadth_6 = "**very broad-based**"
+    signal_6 = "suggesting **strong upward price pressures** that may warrant policy attention"
+elif pct_above_6_mom > 50:
+    breadth_6 = "**broad-based**"
+    signal_6 = "indicating **elevated inflation momentum** across most categories"
+elif pct_above_6_mom > 30:
+    breadth_6 = "**moderately spread**"
+    signal_6 = "showing **mixed inflationary pressures** across the basket"
+else:
+    breadth_6 = "**concentrated in select items**"
+    signal_6 = "suggesting **contained inflation** with most components cooling"
+
+print(f"\n- **{pct_above_6_mom:.1f}%** ({count_above_6_mom} components) are currently inflating above the 6% annualized pace (>0.5% MoM)")
+print(f"\n- Inflation pressure is {breadth_6}, {signal_6}")
+
+# 4% threshold insights
+print(f"\n#### 4% Annualized Threshold")
+pct_above_4_mom = latest_4_thresh['Above_0.33_pct']
+count_above_4_mom = int(latest_4_thresh['Above_0.33'])
+
+if pct_above_4_mom < 30:
+    breadth_4 = "**below the 4% lower bound**"
+    signal_4 = "potentially signaling room for **policy easing**"
+elif pct_above_4_mom < 50:
+    breadth_4 = "**near or below the RBI's tolerance band**"
+    signal_4 = "suggesting **moderate inflationary pressures**"
+else:
+    breadth_4 = "**above the 4% lower bound**"
+    signal_4 = "indicating **sustained inflation momentum**"
+
+print(f"\n- **{pct_above_4_mom:.1f}%** ({count_above_4_mom} components) are inflating above the 4% annualized pace (>0.33% MoM)")
+print(f"\n- The majority of components are {breadth_4}, {signal_4}")
+
+# Year-over-year comparison
+if len(thresh_6_df) >= 13:
+    year_ago_6 = thresh_6_df.iloc[-13]
+    year_ago_4 = thresh_4_df.iloc[-13]
+    year_ago_date_thresh = pd.to_datetime(year_ago_6['time']).strftime('%B %Y')
+    
+    change_6 = pct_above_6_mom - year_ago_6['Above_0.5_pct']
+    change_4 = pct_above_4_mom - year_ago_4['Above_0.33_pct']
+    
+    print(f"\n#### Change from Year Ago ({year_ago_date_thresh})")
+    
+    if abs(change_6) > 10:
+        direction_6 = "increased" if change_6 > 0 else "decreased"
+        print(f"\n- The share of components above 6% annualized pace has **{direction_6} by {abs(change_6):.1f} percentage points**")
+    else:
+        print(f"\n- The share of components above 6% annualized pace has remained **relatively stable** ({change_6:+.1f} pp)")
+    
+    if abs(change_4) > 10:
+        direction_4 = "increased" if change_4 > 0 else "decreased"
+        print(f"\n- The share of components above 4% annualized pace has **{direction_4} by {abs(change_4):.1f} percentage points**")
+    else:
+        print(f"\n- The share of components above 4% annualized pace has remained **relatively stable** ({change_4:+.1f} pp)")
+
+# 12-month trend
+if len(thresh_6_df) >= 12:
+    twelve_months_6 = thresh_6_df.iloc[-12:]
+    twelve_months_4 = thresh_4_df.iloc[-12:]
+    
+    trend_6 = np.polyfit(range(12), twelve_months_6['Above_0.5_pct'].values, 1)[0]
+    trend_4 = np.polyfit(range(12), twelve_months_4['Above_0.33_pct'].values, 1)[0]
+    
+    print(f"\n#### 12-Month Trend")
+    
+    if abs(trend_6) > 0.5:
+        trend_dir_6 = "upward" if trend_6 > 0 else "downward"
+        print(f"\n- Components above 6% threshold show a **{trend_dir_6} trend** over the past year")
+    else:
+        print(f"\n- Components above 6% threshold show **no clear trend** over the past year")
+    
+    if abs(trend_4) > 0.5:
+        trend_dir_4 = "upward" if trend_4 > 0 else "downward"
+        print(f"\n- Components above 4% threshold show a **{trend_dir_4} trend** over the past year")
+    else:
+        print(f"\n- Components above 4% threshold show **no clear trend** over the past year")
+```
+
+## Key Insights
+
+```{python}
+#| echo: false
+#| output: asis
+
+# Generate dynamic insights
+latest_disp = disp_df.iloc[-1]
+
+# Calculate percentage in RBI target band (4-6%)
+pct_in_target = latest_disp['High (4-6%)_pct']
+pct_above_target = latest_disp['Very High (> 6%)_pct']
+pct_below_target = latest_disp['Deflation (< 0%)_pct'] + latest_disp['Low (0-2%)_pct'] + latest_disp['Moderate (2-4%)_pct']
+
+# Get dominant category
+dominant_cat = max(categories, key=lambda c: latest_disp[f'{c}_pct'])
+dominant_pct = latest_disp[f'{dominant_cat}_pct']
+
+print(f"### Current Month ({latest_date})")
+print(f"\n- **{pct_in_target:.1f}%** of CPI components are within the RBI target band (4-6%)")
+print(f"\n- **{pct_above_target:.1f}%** of components are experiencing above-target inflation (>6%)")
+print(f"\n- **{pct_below_target:.1f}%** of components are below the 4% threshold")
+print(f"\n- The dominant category is **{dominant_cat}** with **{dominant_pct:.1f}%** of all components")
+
+# Year-over-year comparison
+if len(disp_df) >= 13:
+    year_ago_disp = disp_df.iloc[-13]
+    
+    # Check if inflation is becoming more/less concentrated
+    pct_target_change = pct_in_target - year_ago_disp['High (4-6%)_pct']
+    
+    print(f"\n### Change from Year Ago ({year_ago_date})")
+    
+    if pct_target_change > 5:
+        print(f"\n- Inflation is becoming more **concentrated** in the RBI target band")
+    elif pct_target_change < -5:
+        print(f"\n- Inflation is becoming more **dispersed** across different brackets")
+    else:
+        print(f"\n- Inflation distribution remains relatively **stable**")
+```
+
+# Seasonality Analysis
+
+```{python}
+#| echo: false
+#| warning: false
+
+# Helper function to create dual heatmaps
+def create_seasonality_heatmap(df_data, column_name, title_prefix):
+    # Calculate YoY and MoM for the column
+    yoy_col = f'{column_name}_YoY_temp'
+    mom_col = f'{column_name}_MoM_temp'
+    df_data[yoy_col] = df_data[column_name].pct_change(12) * 100
+    df_data[mom_col] = df_data[column_name].pct_change(1) * 100
+    
+    # Filter last 7 years
+    current_year = df_data['Year'].max()
+    df_filtered = df_data[df_data['Year'] >= current_year - 6].copy()
+    
+    # Create pivot tables
+    yoy_pivot = df_filtered.pivot_table(values=yoy_col, index='Month', columns='Year', aggfunc='first')
+    mom_pivot = df_filtered.pivot_table(values=mom_col, index='Month', columns='Year', aggfunc='first')
+    
+    yoy_pivot = yoy_pivot.reindex(index=range(1, 13))
+    mom_pivot = mom_pivot.reindex(index=range(1, 13))
+    
+    # Create figure with 2 subplots
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+    
+    month_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    
+    # YoY Heatmap (Left)
+    vals_yoy = yoy_pivot.values
+    finite_vals_yoy = vals_yoy[np.isfinite(vals_yoy)]
+    if finite_vals_yoy.size > 0:
+        vmin_yoy = np.nanpercentile(finite_vals_yoy, 5)
+        vmax_yoy = np.nanpercentile(finite_vals_yoy, 95)
+    else:
+        vmin_yoy, vmax_yoy = -5, 5
+    
+    im1 = ax1.imshow(vals_yoy, aspect='auto', cmap='RdYlGn_r', vmin=vmin_yoy, vmax=vmax_yoy)
+    ax1.set_xticks(range(yoy_pivot.shape[1]))
+    ax1.set_xticklabels(yoy_pivot.columns.astype(str), fontweight='bold', fontsize=10)
+    ax1.set_yticks(range(12))
+    ax1.set_yticklabels(month_labels, fontweight='bold', fontsize=10)
+    ax1.set_xlabel('Year', fontweight='bold', fontsize=11)
+    ax1.set_ylabel('Month', fontweight='bold', fontsize=11)
+    ax1.set_title(f'{title_prefix} - YoY Change (%)', fontweight='bold', fontsize=12, pad=15)
+    
+    for i in range(yoy_pivot.shape[0]):
+        for j in range(yoy_pivot.shape[1]):
+            val = yoy_pivot.values[i, j]
+            if not np.isnan(val):
+                color_intensity = (val - vmin_yoy) / (vmax_yoy - vmin_yoy) if vmax_yoy != vmin_yoy else 0.5
+                text_color = 'white' if color_intensity < 0.3 or color_intensity > 0.7 else 'black'
+                ax1.text(j, i, f"{val:.2f}", ha='center', va='center', 
+                        fontsize=8, color=text_color, fontweight='bold')
+    
+    cbar1 = fig.colorbar(im1, ax=ax1)
+    cbar1.set_label('YoY %', fontweight='bold', fontsize=10)
+    
+    # MoM Heatmap (Right)
+    vals_mom = mom_pivot.values
+    finite_vals_mom = vals_mom[np.isfinite(vals_mom)]
+    if finite_vals_mom.size > 0:
+        vmin_mom = np.nanpercentile(finite_vals_mom, 5)
+        vmax_mom = np.nanpercentile(finite_vals_mom, 95)
+    else:
+        vmin_mom, vmax_mom = -2, 2
+    
+    im2 = ax2.imshow(vals_mom, aspect='auto', cmap='RdYlGn_r', vmin=vmin_mom, vmax=vmax_mom)
+    ax2.set_xticks(range(mom_pivot.shape[1]))
+    ax2.set_xticklabels(mom_pivot.columns.astype(str), fontweight='bold', fontsize=10)
+    ax2.set_yticks(range(12))
+    ax2.set_yticklabels(month_labels, fontweight='bold', fontsize=10)
+    ax2.set_xlabel('Year', fontweight='bold', fontsize=11)
+    ax2.set_ylabel('Month', fontweight='bold', fontsize=11)
+    ax2.set_title(f'{title_prefix} - MoM Change (%)', fontweight='bold', fontsize=12, pad=15)
+    
+    for i in range(mom_pivot.shape[0]):
+        for j in range(mom_pivot.shape[1]):
+            val = mom_pivot.values[i, j]
+            if not np.isnan(val):
+                color_intensity = (val - vmin_mom) / (vmax_mom - vmin_mom) if vmax_mom != vmin_mom else 0.5
+                text_color = 'white' if color_intensity < 0.3 or color_intensity > 0.7 else 'black'
+                ax2.text(j, i, f"{val:.2f}", ha='center', va='center', 
+                        fontsize=8, color=text_color, fontweight='bold')
+    
+    cbar2 = fig.colorbar(im2, ax=ax2)
+    cbar2.set_label('MoM %', fontweight='bold', fontsize=10)
+    
+    plt.tight_layout()
+    plt.show()
+```
+
+## CPI Ex Vegetables
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 12
+#| fig-height: 6
+#| label: fig-seasonality-exveggies
+#| fig-cap: "CPI Excluding Vegetables - Seasonality Patterns (YoY and MoM)"
+
+create_seasonality_heatmap(df, 'CPI (ExVeggies)', 'CPI Ex Vegetables')
+```
+
+## Core CPI (Ex Food, Beverages & Fuel)
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 12
+#| fig-height: 6
+#| label: fig-seasonality-core
+#| fig-cap: "Core CPI (Excluding Food, Beverages & Fuel & Light) - Seasonality Patterns (YoY and MoM)"
+
+create_seasonality_heatmap(df, 'Consumer Price Index: exclude Food & Beverages and Fuel & Light', 'Core CPI (Ex Food, Beverages & Fuel)')
+```
+
+## Personal Care & Effects
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 12
+#| fig-height: 6
+#| label: fig-seasonality-personal
+#| fig-cap: "CPI Miscellaneous (Personal Care & Effects) - Seasonality Patterns (YoY and MoM)"
+
+create_seasonality_heatmap(df, 'Consumer Price Index: Miscellaneous: Personal Care and Effects', 'Personal Care & Effects')
+```
+
+## Food Price Index
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 12
+#| fig-height: 6
+#| label: fig-seasonality-food
+#| fig-cap: "Consumer Food Price Index - Seasonality Patterns (YoY and MoM)"
+
+create_seasonality_heatmap(df, 'Consumer Food Price Index', 'Food Price Index')
+```
+
+## CPI (Excluding Gold)
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 12
+#| fig-height: 6
+#| label: fig-seasonality-CPI (Ex Gold)
+#| fig-cap: "Consumer Food Price Index (Excluding Gold)"
+
+create_seasonality_heatmap(df, 'Exclusion Index (Excluding Consumer Price Index: Miscellaneous: Gold)', 'CPI (Excluding Gold)')
+```
+
+## CPI (Excluding Gold and Silver)
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 12
+#| fig-height: 6
+#| label: fig-seasonality-CPI (Ex Gold and Silver)
+#| fig-cap: "Consumer Food Price Index (Excluding Gol and Silver)"
+
+create_seasonality_heatmap(df, 'Exclusion Index (Excluding Consumer Price Index: Miscellaneous: Gold, Consumer Price Index: Miscellaneous: Silver)', 'CPI (Excluding Gold and Silver)')
+```
+
+
+# Inflation Trends Over Time
+## Recent Trends (Last 7 Years)
+
+```{python}
+
+#| echo: false
+#| warning: false
+#| fig-width: 14
+#| fig-height: 7
+#| label: fig-yoy-trends
+#| fig-cap: "Year-on-Year Inflation Trends - CPI Categories Comparison"
+
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+
+# Calculate YoY for the four categories
+df['CPI_YoY'] = df['Consumer Price Index'].pct_change(12) * 100
+df['ExVeggies_YoY'] = df['CPI (ExVeggies)'].pct_change(12) * 100
+df['Core_YoY'] = df['Core Index'].pct_change(12) * 100
+df['ExGold_YoY'] = df['Exclusion Index (Excluding Consumer Price Index: Miscellaneous: Gold)'].pct_change(12) * 100  # NEW
+
+# Filter to last 7 years for clarity
+current_year = df['Year'].max()
+df_plot = df[df['Year'] >= current_year - 6].copy()
+
+# Create the line chart
+fig, ax = plt.subplots(figsize=(14, 7))
+
+# Plot the four lines
+ax.plot(df_plot['time'], df_plot['CPI_YoY'],
+        color='#1f77b4', linewidth=2.5, label='Overall CPI', marker='o', markersize=4, alpha=0.9)
+
+ax.plot(df_plot['time'], df_plot['ExVeggies_YoY'],
+        color='#ff7f0e', linewidth=2.5, label='CPI (Ex Veggies)', marker='s', markersize=4, alpha=0.9)
+
+ax.plot(df_plot['time'], df_plot['Core_YoY'],
+        color='#2ca02c', linewidth=2.5, label='Core CPI', marker='^', markersize=4, alpha=0.9)
+
+ax.plot(df_plot['time'], df_plot['ExGold_YoY'],
+        color='#9467bd', linewidth=2.5, label='CPI (Ex Gold)', marker='D', markersize=4, alpha=0.9)
+
+# Add reference bands at 4% and 6%
+ax.axhline(y=4, color='red', linewidth=2, linestyle='--', alpha=0.6, label='LB (4%)')
+ax.axhline(y=6, color='red', linewidth=2, linestyle='--', alpha=0.6, label='UB (6%)')
+ax.fill_between(df_plot['time'], 4, 6, color='red', alpha=0.1)
+
+# Styling
+ax.set_xlabel('Time Period', fontweight='bold', fontsize=13)
+ax.set_ylabel('Year-on-Year Change (%)', fontweight='bold', fontsize=13)
+ax.set_title('Year-on-Year Inflation Trends - Key CPI Categories (Last 7 Years)',
+             fontweight='bold', fontsize=15, pad=20)
+
+ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.7)
+ax.axhline(y=0, color='black', linewidth=1, linestyle='-', alpha=0.5)
+
+ax.legend(loc='best', fontsize=11, frameon=True, shadow=True, fancybox=True)
+
+# Date formatting
+ax.xaxis.set_major_locator(mdates.YearLocator())
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+ax.xaxis.set_minor_locator(mdates.MonthLocator((1, 7)))
+plt.xticks(rotation=0, ha='center', fontweight='bold')
+plt.yticks(fontweight='bold')
+
+plt.tight_layout()
+plt.show()
+```
+
+## Month on Month Trend
+
+```{python}
+
+#| echo: false
+#| warning: false
+#| fig-width: 14
+#| fig-height: 7
+#| label: fig-mom-trends
+#| fig-cap: "Month-on-Month Inflation Trends - CPI Categories Comparison"
+
+
+#| echo: false
+#| warning: false
+#| fig-width: 14
+#| fig-height: 7
+#| label: fig-yoy-trends-full
+#| fig-cap: "Year-on-Year Inflation Trends - Complete Historical Data"
+
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+
+# Use full dataset (from 2014 onwards)
+df_full = df[df['Year'] >= 2014].copy()
+
+# Create the line chart
+fig, ax = plt.subplots(figsize=(14, 7))
+
+# Plot the four lines
+ax.plot(df_full['time'], df_full['CPI_YoY'],
+        color='#1f77b4', linewidth=2.5, label='Overall CPI', marker='o', markersize=3, alpha=0.9)
+
+ax.plot(df_full['time'], df_full['ExVeggies_YoY'],
+        color='#ff7f0e', linewidth=2.5, label='CPI (Ex Veggies)', marker='s', markersize=3, alpha=0.9)
+
+ax.plot(df_full['time'], df_full['Core_YoY'],
+        color='#2ca02c', linewidth=2.5, label='Core CPI', marker='^', markersize=3, alpha=0.9)
+
+ax.plot(df_full['time'], df_full['ExGold_YoY'],
+        color='#9467bd', linewidth=2.5, label='CPI (Ex Gold)', marker='D', markersize=3, alpha=0.9)
+
+# Add reference bands at 4% and 6%
+ax.axhline(y=4, color='red', linewidth=2, linestyle='--', alpha=0.6, label='LB (4%)')
+ax.axhline(y=6, color='red', linewidth=2, linestyle='--', alpha=0.6, label='UB (6%)')
+ax.fill_between(df_full['time'], 4, 6, color='red', alpha=0.1)
+
+# Styling
+ax.set_xlabel('Time Period', fontweight='bold', fontsize=13)
+ax.set_ylabel('Year-on-Year Change (%)', fontweight='bold', fontsize=13)
+ax.set_title('Year-on-Year Inflation Trends - Complete Historical Data',
+             fontweight='bold', fontsize=15, pad=20)
+
+ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.7)
+ax.axhline(y=0, color='black', linewidth=1, linestyle='-', alpha=0.5)
+
+ax.legend(loc='best', fontsize=11, frameon=True, shadow=True, fancybox=True)
+
+# Date formatting
+ax.xaxis.set_major_locator(mdates.YearLocator(2))
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+ax.xaxis.set_minor_locator(mdates.YearLocator())
+plt.xticks(rotation=0, ha='center', fontweight='bold')
+plt.yticks(fontweight='bold')
+
+plt.tight_layout()
+plt.show()
+
+
+```
+
+## Historical Overview
+
+```{python}
+
+#| echo: false
+#| warning: false
+#| fig-width: 14
+#| fig-height: 7
+#| label: fig-yoy-trends-full
+#| fig-cap: "Year-on-Year Inflation Trends - Complete Historical Data"
+
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+
+# Use full dataset (from 2014 onwards)
+df_full = df[df['Year'] >= 2014].copy()
+
+# Create the line chart
+fig, ax = plt.subplots(figsize=(14, 7))
+
+# Plot the four lines
+ax.plot(df_full['time'], df_full['CPI_YoY'],
+        color='#1f77b4', linewidth=2.5, label='Overall CPI', marker='o', markersize=3, alpha=0.9)
+
+ax.plot(df_full['time'], df_full['ExVeggies_YoY'],
+        color='#ff7f0e', linewidth=2.5, label='CPI (Ex Veggies)', marker='s', markersize=3, alpha=0.9)
+
+ax.plot(df_full['time'], df_full['Core_YoY'],
+        color='#2ca02c', linewidth=2.5, label='Core CPI', marker='^', markersize=3, alpha=0.9)
+
+ax.plot(df_full['time'], df_full['ExGold_YoY'],
+        color='#9467bd', linewidth=2.5, label='CPI (Ex Gold)', marker='D', markersize=3, alpha=0.9)
+
+# Add reference bands at 4% and 6%
+ax.axhline(y=4, color='red', linewidth=2, linestyle='--', alpha=0.6, label='LB (4%)')
+ax.axhline(y=6, color='red', linewidth=2, linestyle='--', alpha=0.6, label='UB (6%)')
+ax.fill_between(df_full['time'], 4, 6, color='red', alpha=0.1)
+
+# Styling
+ax.set_xlabel('Time Period', fontweight='bold', fontsize=13)
+ax.set_ylabel('Year-on-Year Change (%)', fontweight='bold', fontsize=13)
+ax.set_title('Year-on-Year Inflation Trends - Complete Historical Data',
+             fontweight='bold', fontsize=15, pad=20)
+
+ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.7)
+ax.axhline(y=0, color='black', linewidth=1, linestyle='-', alpha=0.5)
+
+ax.legend(loc='best', fontsize=11, frameon=True, shadow=True, fancybox=True)
+
+# Date formatting
+ax.xaxis.set_major_locator(mdates.YearLocator(2))
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+ax.xaxis.set_minor_locator(mdates.YearLocator())
+plt.xticks(rotation=0, ha='center', fontweight='bold')
+plt.yticks(fontweight='bold')
+
+plt.tight_layout()
+plt.show()
+
+```

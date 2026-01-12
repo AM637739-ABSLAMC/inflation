@@ -1,0 +1,805 @@
+---
+title: "Granular CPI Analysis Report - Sub-Component Level"
+date: "today"
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+    fig-pos: 'H'
+    keep-tex: false
+  docx:
+    toc: true
+    number-sections: true
+    highlight-style: github
+---
+
+
+
+```{python}
+#| echo: false
+#| message: false
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import json
+import warnings
+from matplotlib.patches import Patch
+warnings.filterwarnings('ignore')
+
+# Load the detailed dataset (298 granular components)
+df = pd.read_csv('cleaned_detailed_inflation.csv')
+
+# Convert time column to datetime
+df['time'] = pd.to_datetime(df['time'])
+
+# Extract year and month for analysis
+df['Year'] = df['time'].dt.year
+df['Month'] = df['time'].dt.month
+
+# Sort the dataframe by time
+df = df.sort_values('time').reset_index(drop=True)
+
+# Load weights
+with open('detailed_weights.json', 'r') as f:
+    weights = json.load(f)
+```
+
+```{python}
+#| echo: false
+#| warning: false
+
+# Exclude synthetic/calculated columns AND top-level aggregates
+meta_cols = ['time', 'Year', 'Month', 'Month_Name']
+
+# For detailed data, we keep all granular items
+# Only exclude if there are any aggregate indices (usually none in detailed data)
+EXCLUDE_EXACT = set()
+
+EXCLUDE_KEYWORDS = [
+    'Custom Index', 'Core Index', 'Core Bottom Up', 'Core Ex TnC',
+    'Core Core Exc', 'Exclusion Index', 'RBI Core Index', 'Protein Index',
+    '(ExVeggies)', 'exclude Food'
+]
+
+def is_excluded(colname: str) -> bool:
+    """Check if column should be excluded"""
+    if colname in EXCLUDE_EXACT:
+        return True
+    for kw in EXCLUDE_KEYWORDS:
+        if kw.lower() in colname.lower():
+            return True
+    return False
+
+# Get CPI component columns (all granular items)
+candidates = [c for c in df.columns if c not in meta_cols]
+cpi_cols = [c for c in candidates if not is_excluded(c) and not c.endswith('_YoY') and not c.endswith('_MoM')]
+
+print(f"Total granular CPI components: {len(cpi_cols)}")
+```
+
+
+# Top Movers 
+
+## Month-on-Month Top Movers
+
+```{python}
+#| echo: false
+#| warning: false
+
+# Get latest and previous month indices
+latest_idx = df.index[-1]
+prev_idx = df.index[-2]
+
+latest_date = df.loc[latest_idx, 'time'].strftime('%B %Y')
+prev_date = df.loc[prev_idx, 'time'].strftime('%B %Y')
+
+# Calculate month-on-month changes for all components
+rows = []
+for col in cpi_cols:
+    prev_v = df.loc[prev_idx, col]
+    cur_v = df.loc[latest_idx, col]
+    weight = weights.get(col, 0.0)
+    
+    if pd.notna(prev_v) and pd.notna(cur_v) and prev_v != 0:
+        change = ((cur_v - prev_v) / prev_v) * 100
+        # Only include if there's actual change
+        if abs(change) > 0.01:
+            rows.append({
+                'Category': col,
+                'MoM Change (%)': change,
+                'Weight': weight
+            })
+
+# Create dataframe and sort by change
+changes_df = pd.DataFrame(rows).sort_values('MoM Change (%)', ascending=False)
+
+# Get top 10 increases and decreases
+top_10_increases = changes_df[changes_df['MoM Change (%)'] > 0].head(10).copy()
+top_10_decreases = changes_df[changes_df['MoM Change (%)'] < 0].tail(10).copy()
+
+# Shorten category names for display
+def shorten_name(s, max_len=40):
+    """Shorten category names for better display with word wrapping"""
+    # Handle special case for overall CPI first
+    if s == 'Consumer Price Index':
+        return 'Overall CPI'
+    
+    # Remove nested prefixes iteratively
+    prefixes_to_remove = [
+        'Consumer Price Index: ',
+        'Food and Beverages: ',
+        'Miscellaneous: ',
+        'Clothing and Footwear: ',
+        'Pan, Tobacco and Intoxicants: ',
+        'Fuel and Light: ',
+        'Housing: '
+    ]
+    
+    # Keep removing prefixes until none match
+    changed = True
+    while changed:
+        changed = False
+        for prefix in prefixes_to_remove:
+            if s.startswith(prefix):
+                s = s[len(prefix):]
+                changed = True
+                break
+    
+    # If still too long, truncate intelligently
+    if len(s) > max_len:
+        s = s[:max_len-3] + '...'
+    return s
+
+top_10_increases['Display_Name'] = top_10_increases['Category'].apply(shorten_name)
+top_10_decreases['Display_Name'] = top_10_decreases['Category'].apply(shorten_name)
+
+```
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 12
+#| fig-height: 10
+#| label: fig-top-changes-mom
+#| fig-cap: "Top 10 Inflationary and Deflationary Items (Month-on-Month)"
+
+# Create figure with proper spacing
+fig, ax = plt.subplots(figsize=(12, 10))
+
+# Prepare data
+categories = list(top_10_increases['Display_Name']) + list(top_10_decreases['Display_Name'])
+changes = list(top_10_increases['MoM Change (%)']) + list(top_10_decreases['MoM Change (%)'])
+
+# Create positions for bars
+y_positions = np.arange(len(categories))
+
+# Color bars based on positive/negative
+colors = ['#d62728' if x > 0 else '#2ca02c' for x in changes]
+
+# Create horizontal bar chart
+bars = ax.barh(y_positions, changes, color=colors, alpha=0.85, edgecolor='black', linewidth=0.8)
+
+# Calculate x-axis range with padding for labels
+max_val = max(abs(min(changes)), abs(max(changes)))
+ax.set_xlim([-max_val * 1.35, max_val * 1.35])
+
+# Add value labels at the end of bars without impact
+for i, (pos, val) in enumerate(zip(y_positions, changes)):
+    if val > 0:
+        ax.text(val + max_val * 0.03, pos, f'{val:+.2f}%', 
+               va='center', ha='left', fontsize=8, fontweight='bold', color='black')
+    else:
+        ax.text(val - max_val * 0.03, pos, f'{val:+.2f}%', 
+               va='center', ha='right', fontsize=8, fontweight='bold', color='black')
+
+# Customize plot
+ax.set_yticks(y_positions)
+ax.set_yticklabels(categories, fontsize=9)
+ax.set_xlabel('Month-on-Month Change (%)', fontweight='bold', fontsize=12)
+ax.set_title(f'Top 10 Price Movers (MoM): {prev_date} to {latest_date}', 
+             fontweight='bold', fontsize=14, pad=20)
+ax.axvline(x=0, color='black', linewidth=1.5, linestyle='-', alpha=0.7)
+ax.grid(axis='x', alpha=0.3, linestyle='--')
+
+# Remove legend
+plt.tight_layout()
+plt.show()
+```
+
+
+
+## Year-on-Year Top Movers
+
+```{python}
+#| echo: false
+#| warning: false
+
+# Get latest and year-ago indices for YoY calculation
+latest_idx_yoy = df.index[-1]
+year_ago_idx = df.index[-13] if len(df) >= 13 else df.index[0]
+
+latest_date_yoy = df.loc[latest_idx_yoy, 'time'].strftime('%B %Y')
+year_ago_date_yoy = df.loc[year_ago_idx, 'time'].strftime('%B %Y')
+
+# Calculate year-on-year changes for all components
+rows_yoy = []
+for col in cpi_cols:
+    year_ago_v = df.loc[year_ago_idx, col]
+    cur_v = df.loc[latest_idx_yoy, col]
+    weight = weights.get(col, 0.0)
+    
+    if pd.notna(year_ago_v) and pd.notna(cur_v) and year_ago_v != 0:
+        change = ((cur_v - year_ago_v) / year_ago_v) * 100
+        if abs(change) > 0.01:
+            rows_yoy.append({
+                'Category': col,
+                'YoY Change (%)': change,
+                'Weight': weight
+            })
+
+# Create dataframe and sort by change
+changes_yoy_df = pd.DataFrame(rows_yoy).sort_values('YoY Change (%)', ascending=False)
+
+# Get top 10 increases and decreases
+top_10_increases_yoy = changes_yoy_df[changes_yoy_df['YoY Change (%)'] > 0].head(10).copy()
+top_10_decreases_yoy = changes_yoy_df[changes_yoy_df['YoY Change (%)'] < 0].tail(10).copy()
+
+# Shorten category names
+top_10_increases_yoy['Display_Name'] = top_10_increases_yoy['Category'].apply(shorten_name)
+top_10_decreases_yoy['Display_Name'] = top_10_decreases_yoy['Category'].apply(shorten_name)
+```
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 12
+#| fig-height: 10
+#| label: fig-top-changes-yoy
+#| fig-cap: "Top 10 Inflationary and Deflationary Items (Year-on-Year)"
+
+# Create figure
+fig, ax = plt.subplots(figsize=(12, 10))
+
+# Prepare data
+categories_yoy = list(top_10_increases_yoy['Display_Name']) + list(top_10_decreases_yoy['Display_Name'])
+changes_yoy = list(top_10_increases_yoy['YoY Change (%)']) + list(top_10_decreases_yoy['YoY Change (%)'])
+
+# Create positions for bars
+y_positions_yoy = np.arange(len(categories_yoy))
+
+# Color bars based on positive/negative
+colors_yoy = ['#d62728' if x > 0 else '#2ca02c' for x in changes_yoy]
+
+# Create horizontal bar chart
+bars = ax.barh(y_positions_yoy, changes_yoy, color=colors_yoy, alpha=0.85, edgecolor='black', linewidth=0.8)
+
+# Calculate x-axis range with padding for labels
+max_val_yoy = max(abs(min(changes_yoy)), abs(max(changes_yoy)))
+ax.set_xlim([-max_val_yoy * 1.35, max_val_yoy * 1.35])
+
+# Add value labels at the end of bars without impact
+for i, (pos, val) in enumerate(zip(y_positions_yoy, changes_yoy)):
+    if val > 0:
+        ax.text(val + max_val_yoy * 0.03, pos, f'{val:+.2f}%', 
+               va='center', ha='left', fontsize=8, fontweight='bold', color='black')
+    else:
+        ax.text(val - max_val_yoy * 0.03, pos, f'{val:+.2f}%', 
+               va='center', ha='right', fontsize=8, fontweight='bold', color='black')
+
+# Customize plot
+ax.set_yticks(y_positions_yoy)
+ax.set_yticklabels(categories_yoy, fontsize=9)
+ax.set_xlabel('Year-on-Year Change (%)', fontweight='bold', fontsize=12)
+ax.set_title(f'Top 10 Price Movers (YoY): {year_ago_date_yoy} to {latest_date_yoy}', 
+             fontweight='bold', fontsize=14, pad=20)
+ax.axvline(x=0, color='black', linewidth=1.5, linestyle='-', alpha=0.7)
+ax.grid(axis='x', alpha=0.3, linestyle='--')
+
+# Remove legend
+plt.tight_layout()
+plt.show()
+```
+
+
+# Inflation Distribution
+
+## Count-Based Dispersion (Number of Items)
+
+```{python}
+#| echo: false
+#| warning: false
+# Filter data for the last 7 years
+current_year = df['Year'].max()
+df_last_7_years = df[df['Year'] >= current_year - 6].copy()
+
+# Calculate YoY changes for dispersion analysis
+yoy_cols = [f'{col}_YoY' for col in cpi_cols]
+
+# Define inflation brackets
+def classify_inflation(val):
+    if pd.isna(val):
+        return None
+    elif val < 0:
+        return 'Deflation (<0%)'
+    elif val < 2:
+        return 'Low (0-2%)'
+    elif val < 4:
+        return 'Moderate (2-4%)'
+    elif val <= 6:
+        return 'High (4-6%)'
+    else:
+        return 'Very High (>6%)'
+
+# Create time series of dispersion
+disp_df = []
+for idx in df.index:
+    row_data = {'time': df.loc[idx, 'time'], 'Year': df.loc[idx, 'Year'], 'Month': df.loc[idx, 'Month']}
+    
+    # Get YoY values for this month
+    yoy_values = [df.loc[idx, col] for col in yoy_cols]
+    yoy_values = [v for v in yoy_values if pd.notna(v)]
+    
+    if len(yoy_values) > 0:
+        # Classify each component
+        classifications = [classify_inflation(v) for v in yoy_values]
+        
+        # Count by bracket
+        for bracket in ['Deflation (<0%)', 'Low (0-2%)', 'Moderate (2-4%)', 'High (4-6%)', 'Very High (>6%)']:
+            count = classifications.count(bracket)
+            row_data[bracket] = count
+            row_data[f'{bracket}_pct'] = (count / len(yoy_values)) * 100
+        
+        disp_df.append(row_data)
+
+disp_df = pd.DataFrame(disp_df)
+
+# Filter to last 7 years
+disp_7y = disp_df[disp_df['Year'] >= current_year - 6].copy()
+
+# Define categories for plotting
+categories = ['Deflation (<0%)', 'Low (0-2%)', 'Moderate (2-4%)', 'High (4-6%)', 'Very High (>6%)']
+colors = ['#3182bd', '#9ecae1', '#ffeda0', '#feb24c', '#f03b20']
+```
+
+### 7-Year View (Normalized)
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 14
+#| fig-height: 7
+#| label: fig-dispersion-7y-norm-count
+#| fig-cap: "Inflation Distribution by Bracket - Last 7 Years (Normalized, Count-Based)"
+
+fig, ax = plt.subplots(figsize=(14, 7))
+
+# Create stacked area for percentages
+pct_cols = [f'{cat}_pct' for cat in categories]
+ax.stackplot(disp_7y['time'], 
+             *[disp_7y[col] for col in pct_cols],
+             labels=categories,
+             colors=colors,
+             alpha=0.8)
+
+ax.set_xlabel('Time Period', fontweight='bold', fontsize=12)
+ax.set_ylabel('Percentage of Items (%)', fontweight='bold', fontsize=12)
+ax.set_title('Inflation Distribution Across Brackets - Last 7 Years (Count-Based)', 
+             fontweight='bold', fontsize=14, pad=15)
+ax.legend(loc='upper left', fontsize=10, frameon=True, shadow=True)
+ax.grid(True, alpha=0.3, linestyle='--')
+ax.set_ylim([0, 100])
+
+# Add current values annotation
+if len(disp_7y) > 0:
+    latest_disp = disp_7y.iloc[-1]
+    latest_date = latest_disp['time'].strftime('%b %Y')
+    annotation_text = f"Current ({latest_date}):\n"
+    for cat in categories:
+        pct = latest_disp[f'{cat}_pct']
+        annotation_text += f"{cat}: {pct:.1f}%\n"
+    
+    ax.text(0.99, 0.97, annotation_text,
+            transform=ax.transAxes,
+            fontsize=9,
+            verticalalignment='top',
+            horizontalalignment='right',
+            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+
+plt.tight_layout()
+plt.show()
+```
+
+### 3-Year View (Normalized)
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 14
+#| fig-height: 7
+#| label: fig-dispersion-3y-norm-count
+#| fig-cap: "Inflation Distribution by Bracket - Last 3 Years (Normalized, Count-Based)"
+
+disp_3y = disp_df[disp_df['Year'] >= current_year - 2].copy()
+
+fig, ax = plt.subplots(figsize=(14, 7))
+
+ax.stackplot(disp_3y['time'], 
+             *[disp_3y[col] for col in pct_cols],
+             labels=categories,
+             colors=colors,
+             alpha=0.8)
+
+ax.set_xlabel('Time Period', fontweight='bold', fontsize=12)
+ax.set_ylabel('Percentage of Items (%)', fontweight='bold', fontsize=12)
+ax.set_title('Inflation Distribution Across Brackets - Last 3 Years (Count-Based)', 
+             fontweight='bold', fontsize=14, pad=15)
+ax.legend(loc='upper left', fontsize=10, frameon=True, shadow=True)
+ax.grid(True, alpha=0.3, linestyle='--')
+ax.set_ylim([0, 100])
+
+# Add current values annotation
+if len(disp_3y) > 0:
+    latest_disp = disp_3y.iloc[-1]
+    latest_date = latest_disp['time'].strftime('%b %Y')
+    annotation_text = f"Current ({latest_date}):\n"
+    for cat in categories:
+        pct = latest_disp[f'{cat}_pct']
+        annotation_text += f"{cat}: {pct:.1f}%\n"
+    
+    ax.text(0.99, 0.97, annotation_text,
+            transform=ax.transAxes,
+            fontsize=9,
+            verticalalignment='top',
+            horizontalalignment='right',
+            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+
+plt.tight_layout()
+plt.show()
+```
+
+## Weight-Based Dispersion (% of CPI Weight)
+
+```{python}
+#| echo: false
+#| warning: false
+
+# Create weight-based dispersion time series
+disp_weight_df = []
+for idx in df.index:
+    row_data = {'time': df.loc[idx, 'time'], 'Year': df.loc[idx, 'Year'], 'Month': df.loc[idx, 'Month']}
+    
+    # Get YoY values and weights for this month
+    component_data = []
+    total_weight = 0
+    
+    for col in cpi_cols:
+        yoy_val = df.loc[idx, f'{col}_YoY']
+        weight = weights.get(col, 0.0)
+        if pd.notna(yoy_val) and weight > 0:
+            component_data.append({'yoy': yoy_val, 'weight': weight})
+            total_weight += weight
+    
+    if len(component_data) > 0 and total_weight > 0:
+        # Sum weights by bracket
+        for bracket in categories:
+            bracket_weight = sum([d['weight'] for d in component_data if classify_inflation(d['yoy']) == bracket])
+            row_data[f'{bracket}_weight'] = bracket_weight
+            row_data[f'{bracket}_weight_pct'] = (bracket_weight / total_weight) * 100
+        
+        disp_weight_df.append(row_data)
+
+disp_weight_df = pd.DataFrame(disp_weight_df)
+
+# Filter to last 7 and 3 years
+disp_weight_7y = disp_weight_df[disp_weight_df['Year'] >= current_year - 6].copy()
+disp_weight_3y = disp_weight_df[disp_weight_df['Year'] >= current_year - 2].copy()
+```
+
+### 7-Year View (Normalized, Weight-Based)
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 14
+#| fig-height: 7
+#| label: fig-dispersion-7y-weight
+#| fig-cap: "Inflation Distribution by Bracket - Last 7 Years (Weight-Based)"
+
+fig, ax = plt.subplots(figsize=(14, 7))
+
+weight_pct_cols = [f'{cat}_weight_pct' for cat in categories]
+ax.stackplot(disp_weight_7y['time'], 
+             *[disp_weight_7y[col] for col in weight_pct_cols],
+             labels=categories,
+             colors=colors,
+             alpha=0.8)
+
+ax.set_xlabel('Time Period', fontweight='bold', fontsize=12)
+ax.set_ylabel('Percentage of CPI Weight (%)', fontweight='bold', fontsize=12)
+ax.set_title('Inflation Distribution Across Brackets - Last 7 Years (Weight-Based)', 
+             fontweight='bold', fontsize=14, pad=15)
+ax.legend(loc='upper left', fontsize=10, frameon=True, shadow=True)
+ax.grid(True, alpha=0.3, linestyle='--')
+ax.set_ylim([0, 100])
+
+# Add current values annotation
+if len(disp_weight_7y) > 0:
+    latest_disp = disp_weight_7y.iloc[-1]
+    latest_date = latest_disp['time'].strftime('%b %Y')
+    annotation_text = f"Current ({latest_date}):\n"
+    for cat in categories:
+        weight_pct = latest_disp[f'{cat}_weight_pct']
+        annotation_text += f"{cat}: {weight_pct:.1f}%\n"
+    
+    ax.text(0.99, 0.97, annotation_text,
+            transform=ax.transAxes,
+            fontsize=9,
+            verticalalignment='top',
+            horizontalalignment='right',
+            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+
+plt.tight_layout()
+plt.show()
+```
+
+### 3-Year View (Normalized, Weight-Based)
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 14
+#| fig-height: 7
+#| label: fig-dispersion-3y-weight
+#| fig-cap: "Inflation Distribution by Bracket - Last 3 Years (Weight-Based)"
+
+fig, ax = plt.subplots(figsize=(14, 7))
+
+ax.stackplot(disp_weight_3y['time'], 
+             *[disp_weight_3y[col] for col in weight_pct_cols],
+             labels=categories,
+             colors=colors,
+             alpha=0.8)
+
+ax.set_xlabel('Time Period', fontweight='bold', fontsize=12)
+ax.set_ylabel('Percentage of CPI Weight (%)', fontweight='bold', fontsize=12)
+ax.set_title('Inflation Distribution Across Brackets - Last 3 Years (Weight-Based)', 
+             fontweight='bold', fontsize=14, pad=15)
+ax.legend(loc='upper left', fontsize=10, frameon=True, shadow=True)
+ax.grid(True, alpha=0.3, linestyle='--')
+ax.set_ylim([0, 100])
+
+# Add current values annotation
+if len(disp_weight_3y) > 0:
+    latest_disp = disp_weight_3y.iloc[-1]
+    latest_date = latest_disp['time'].strftime('%b %Y')
+    annotation_text = f"Current ({latest_date}):\n"
+    for cat in categories:
+        weight_pct = latest_disp[f'{cat}_weight_pct']
+        annotation_text += f"{cat}: {weight_pct:.1f}%\n"
+    
+    ax.text(0.99, 0.97, annotation_text,
+            transform=ax.transAxes,
+            fontsize=9,
+            verticalalignment='top',
+            horizontalalignment='right',
+            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+
+plt.tight_layout()
+plt.show()
+```
+
+
+# Annualized MoM Threshold Analysis
+
+## 6% Annualized (0.5% MoM Threshold)
+
+```{python}
+#| echo: false
+#| warning: false
+
+# Get MoM columns
+mom_cols = [f'{col}_MoM' for col in cpi_cols]
+
+# Calculate threshold metrics over time
+threshold_6_df = []
+for idx in df.index:
+    row_data = {'time': df.loc[idx, 'time'], 'Year': df.loc[idx, 'Year'], 'Month': df.loc[idx, 'Month']}
+    
+    # Get MoM values
+    mom_values = []
+    mom_weights = []
+    
+    for col in cpi_cols:
+        mom_val = df.loc[idx, f'{col}_MoM']
+        weight = weights.get(col, 0.0)
+        if pd.notna(mom_val) and weight > 0:
+            mom_values.append(mom_val)
+            mom_weights.append(weight)
+    
+    if len(mom_values) > 0:
+        # Count and weight above/below 0.5% MoM (6% annualized)
+        above_threshold = [v >= 0.5 for v in mom_values]
+        below_threshold = [v < 0.5 for v in mom_values]
+        
+        row_data['Above 6%_count'] = sum(above_threshold)
+        row_data['Below 6%_count'] = sum(below_threshold)
+        row_data['Above 6%_pct'] = (sum(above_threshold) / len(mom_values)) * 100
+        row_data['Below 6%_pct'] = (sum(below_threshold) / len(mom_values)) * 100
+        
+        # Weight-based
+        total_weight = sum(mom_weights)
+        above_weight = sum([w for v, w in zip(mom_values, mom_weights) if v >= 0.5])
+        below_weight = sum([w for v, w in zip(mom_values, mom_weights) if v < 0.5])
+        
+        row_data['Above 6%_weight'] = above_weight
+        row_data['Below 6%_weight'] = below_weight
+        row_data['Above 6%_weight_pct'] = (above_weight / total_weight) * 100 if total_weight > 0 else 0
+        row_data['Below 6%_weight_pct'] = (below_weight / total_weight) * 100 if total_weight > 0 else 0
+        
+        threshold_6_df.append(row_data)
+
+threshold_6_df = pd.DataFrame(threshold_6_df)
+threshold_6_7y = threshold_6_df[threshold_6_df['Year'] >= current_year - 6].copy()
+```
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 14
+#| fig-height: 6
+#| label: fig-threshold-6-dual
+#| fig-cap: "Items Above/Below 6% Annualized Inflation (0.5% MoM) - Count and Weight"
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+
+# Left: Count-based
+ax1.stackplot(threshold_6_7y['time'],
+              threshold_6_7y['Above 6%_pct'],
+              threshold_6_7y['Below 6%_pct'],
+              labels=['Above 6% (≥0.5% MoM)', 'Below 6% (<0.5% MoM)'],
+              colors=['#feb24c', '#6baed6'],
+              alpha=0.8)
+
+ax1.set_xlabel('Time Period', fontweight='bold', fontsize=11)
+ax1.set_ylabel('Percentage of Items (%)', fontweight='bold', fontsize=11)
+ax1.set_title('6% Annualized Threshold - Count-Based', fontweight='bold', fontsize=12)
+ax1.legend(loc='best', fontsize=9)
+ax1.grid(True, alpha=0.3)
+ax1.set_ylim([0, 100])
+
+# Right: Weight-based
+ax2.stackplot(threshold_6_7y['time'],
+              threshold_6_7y['Above 6%_weight_pct'],
+              threshold_6_7y['Below 6%_weight_pct'],
+              labels=['Above 6% (≥0.5% MoM)', 'Below 6% (<0.5% MoM)'],
+              colors=['#feb24c', '#6baed6'],
+              alpha=0.8)
+
+ax2.set_xlabel('Time Period', fontweight='bold', fontsize=11)
+ax2.set_ylabel('Percentage of CPI Weight (%)', fontweight='bold', fontsize=11)
+ax2.set_title('6% Annualized Threshold - Weight-Based', fontweight='bold', fontsize=12)
+ax2.legend(loc='best', fontsize=9)
+ax2.grid(True, alpha=0.3)
+ax2.set_ylim([0, 100])
+
+# Add current values
+if len(threshold_6_7y) > 0:
+    latest = threshold_6_7y.iloc[-1]
+    latest_date_str = latest['time'].strftime('%b %Y')
+    
+    ax1.text(0.98, 0.02, f"{latest_date_str}\nAbove: {latest['Above 6%_pct']:.1f}%\nBelow: {latest['Below 6%_pct']:.1f}%",
+             transform=ax1.transAxes, fontsize=8, va='bottom', ha='right',
+             bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+    
+    ax2.text(0.98, 0.02, f"{latest_date_str}\nAbove: {latest['Above 6%_weight_pct']:.1f}%\nBelow: {latest['Below 6%_weight_pct']:.1f}%",
+             transform=ax2.transAxes, fontsize=8, va='bottom', ha='right',
+             bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+
+plt.tight_layout()
+plt.show()
+```
+
+## 4% Annualized (0.33% MoM Threshold)
+
+```{python}
+#| echo: false
+#| warning: false
+
+# Calculate 4% threshold metrics
+threshold_4_df = []
+for idx in df.index:
+    row_data = {'time': df.loc[idx, 'time'], 'Year': df.loc[idx, 'Year'], 'Month': df.loc[idx, 'Month']}
+    
+    mom_values = []
+    mom_weights = []
+    
+    for col in cpi_cols:
+        mom_val = df.loc[idx, f'{col}_MoM']
+        weight = weights.get(col, 0.0)
+        if pd.notna(mom_val) and weight > 0:
+            mom_values.append(mom_val)
+            mom_weights.append(weight)
+    
+    if len(mom_values) > 0:
+        above_threshold = [v >= 0.33 for v in mom_values]
+        below_threshold = [v < 0.33 for v in mom_values]
+        
+        row_data['Above 4%_count'] = sum(above_threshold)
+        row_data['Below 4%_count'] = sum(below_threshold)
+        row_data['Above 4%_pct'] = (sum(above_threshold) / len(mom_values)) * 100
+        row_data['Below 4%_pct'] = (sum(below_threshold) / len(mom_values)) * 100
+        
+        total_weight = sum(mom_weights)
+        above_weight = sum([w for v, w in zip(mom_values, mom_weights) if v >= 0.33])
+        below_weight = sum([w for v, w in zip(mom_values, mom_weights) if v < 0.33])
+        
+        row_data['Above 4%_weight'] = above_weight
+        row_data['Below 4%_weight'] = below_weight
+        row_data['Above 4%_weight_pct'] = (above_weight / total_weight) * 100 if total_weight > 0 else 0
+        row_data['Below 4%_weight_pct'] = (below_weight / total_weight) * 100 if total_weight > 0 else 0
+        
+        threshold_4_df.append(row_data)
+
+threshold_4_df = pd.DataFrame(threshold_4_df)
+threshold_4_7y = threshold_4_df[threshold_4_df['Year'] >= current_year - 6].copy()
+```
+
+```{python}
+#| echo: false
+#| warning: false
+#| fig-width: 14
+#| fig-height: 6
+#| label: fig-threshold-4-dual
+#| fig-cap: "Items Above/Below 4% Annualized Inflation (0.33% MoM) - Count and Weight"
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+
+# Left: Count-based
+ax1.stackplot(threshold_4_7y['time'],
+              threshold_4_7y['Above 4%_pct'],
+              threshold_4_7y['Below 4%_pct'],
+              labels=['Above 4% (≥0.33% MoM)', 'Below 4% (<0.33% MoM)'],
+              colors=['#feb24c', '#6baed6'],
+              alpha=0.8)
+
+ax1.set_xlabel('Time Period', fontweight='bold', fontsize=11)
+ax1.set_ylabel('Percentage of Items (%)', fontweight='bold', fontsize=11)
+ax1.set_title('4% Annualized Threshold - Count-Based', fontweight='bold', fontsize=12)
+ax1.legend(loc='best', fontsize=9)
+ax1.grid(True, alpha=0.3)
+ax1.set_ylim([0, 100])
+
+# Right: Weight-based
+ax2.stackplot(threshold_4_7y['time'],
+              threshold_4_7y['Above 4%_weight_pct'],
+              threshold_4_7y['Below 4%_weight_pct'],
+              labels=['Above 4% (≥0.33% MoM)', 'Below 4% (<0.33% MoM)'],
+              colors=['#feb24c', '#6baed6'],
+              alpha=0.8)
+
+ax2.set_xlabel('Time Period', fontweight='bold', fontsize=11)
+ax2.set_ylabel('Percentage of CPI Weight (%)', fontweight='bold', fontsize=11)
+ax2.set_title('4% Annualized Threshold - Weight-Based', fontweight='bold', fontsize=12)
+ax2.legend(loc='best', fontsize=9)
+ax2.grid(True, alpha=0.3)
+ax2.set_ylim([0, 100])
+
+# Add current values
+if len(threshold_4_7y) > 0:
+    latest = threshold_4_7y.iloc[-1]
+    latest_date_str = latest['time'].strftime('%b %Y')
+    
+    ax1.text(0.98, 0.02, f"{latest_date_str}\nAbove: {latest['Above 4%_pct']:.1f}%\nBelow: {latest['Below 4%_pct']:.1f}%",
+             transform=ax1.transAxes, fontsize=8, va='bottom', ha='right',
+             bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+    
+    ax2.text(0.98, 0.02, f"{latest_date_str}\nAbove: {latest['Above 4%_weight_pct']:.1f}%\nBelow: {latest['Below 4%_weight_pct']:.1f}%",
+             transform=ax2.transAxes, fontsize=8, va='bottom', ha='right',
+             bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+
+plt.tight_layout()
+plt.show()
+```
+

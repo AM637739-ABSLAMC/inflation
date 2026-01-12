@@ -1,0 +1,18 @@
+# Need a quarto inflation analysis report with these sections
+
+# Heatmap description - 
+    Years on top (Like Column names) - Months on left (Like Row names) 
+    We can choose which year and which column of our df we want to show 
+
+
+1. Overall Consumer Price Index Heatmap Year on year change and month on month change.
+
+2.Top 5 Changes -  Top inflationary changes and top deflationary changes
+
+3. Seasonality - Month on Month and YoY
+    CPI 
+    CPI Ex Veggies
+    CPI Ex food Fuel Light
+    CPI Ex Personal Effective
+    Food infalation
+
